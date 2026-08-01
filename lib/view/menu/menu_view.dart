@@ -418,9 +418,6 @@ class _MenuViewState extends State<MenuView> {
                     /// BOTTOM NAVIGATION
                     /// =================================================
 
-                    _buildBottomBar(),
-
-                    const SizedBox(height: 18),
                   ],
                 ),
               ),
@@ -428,7 +425,12 @@ class _MenuViewState extends State<MenuView> {
           ),
         ),
       ),
+
+      bottomNavigationBar: _buildBottomBar(),
+
     );
+
+
   }
 
   /// =====================================================
