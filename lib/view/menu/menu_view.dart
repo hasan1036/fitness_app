@@ -10,6 +10,12 @@ import '../running/running_view.dart';
 import '../schedule/schedule_view.dart';
 import '../weight/weight_view.dart';
 import '../workout/workout_view.dart';
+import 'package:flutter/material.dart';
+
+import '../../common/color_extention.dart';
+
+import '../../data/workout_day_view.dart';
+import '../../service/workout_progress_service.dart';
 
 
 
@@ -937,12 +943,27 @@ class _MenuViewState extends State<MenuView> {
   /// =====================================================
   /// DAY CARD
   /// =====================================================
+Widget _buildDayCard({
+required Map<String, dynamic> item,
+required int index,
+required bool active,
+}) {
 
-  Widget _buildDayCard({
-    required Map<String, dynamic> item,
-    required int index,
-    required bool active,
-  }) {
+final int dayNumber = index + 1;
+
+return FutureBuilder<WorkoutProgress>(
+future: WorkoutProgressService.getProgress(dayNumber),
+builder: (context, snapshot) {
+
+final WorkoutProgress progress =
+snapshot.data ??
+const WorkoutProgress(
+started: false,
+completed: false,
+currentExerciseIndex: 0,
+totalExercises: 0,
+);
+
     return Padding(
       padding: const EdgeInsets.fromLTRB(
         20,
@@ -1012,6 +1033,7 @@ class _MenuViewState extends State<MenuView> {
               ],
             ),
           ),
+
 
           /// =================================================
           /// DAY CARD
@@ -1103,6 +1125,8 @@ class _MenuViewState extends State<MenuView> {
                           Text(
                             "${item["time"]} • ${item["calorie"]}",
 
+
+
                             style: TextStyle(
                               color: active
                                   ? Colors.white
@@ -1111,7 +1135,64 @@ class _MenuViewState extends State<MenuView> {
                               fontSize: 14,
                             ),
                           ),
+                          if (progress.started) ...[
+                            const SizedBox(height: 8),
 
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    progress.completed
+                                        ? "Workout completed"
+                                        : progress.progressText,
+                                    style: TextStyle(
+                                      color: active
+                                          ? Colors.white70
+                                          : TColor.primaryText,
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ),
+
+                                Text(
+                                  "${(progress.progress * 100).round()}%",
+                                  style: TextStyle(
+                                    color: progress.completed
+                                        ? Colors.green
+                                        : active
+                                        ? Colors.white
+                                        : TColor.primary,
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                                ),
+                              ],
+                            ),
+
+                            const SizedBox(height: 7),
+
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(20),
+
+                              child: LinearProgressIndicator(
+                                value: progress.progress,
+                                minHeight: 6,
+
+                                backgroundColor: active
+                                    ? Colors.white24
+                                    : TColor.primaryLight,
+
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                  progress.completed
+                                      ? Colors.green
+                                      : active
+                                      ? Colors.white
+                                      : TColor.primary,
+                                ),
+                              ),
+                            ),
+                          ],
                           /// START button শুধু selected Day-তে থাকবে
 
                           if (active) ...[
@@ -1147,15 +1228,18 @@ class _MenuViewState extends State<MenuView> {
                                   MainAxisAlignment.center,
 
                                   children: [
-                                    const Expanded(
+                                     Expanded(
                                       child: Center(
-                                        child: Text(
-                                          "START",
-                                          style: TextStyle(
+                                        child:  Text(
+                                          progress.completed
+                                              ? "REPEAT"
+                                              : progress.started
+                                              ? "CONTINUE"
+                                              : "START",
+                                          style: const TextStyle(
                                             color: Colors.black,
                                             fontSize: 17,
-                                            fontWeight:
-                                            FontWeight.w800,
+                                            fontWeight: FontWeight.w800,
                                           ),
                                         ),
                                       ),
@@ -1197,8 +1281,9 @@ class _MenuViewState extends State<MenuView> {
         ],
       ),
     );
-  }
-
+},
+);
+}
   /// =====================================================
   /// QUICK ACCESS CARD
   /// =====================================================

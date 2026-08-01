@@ -3,8 +3,10 @@ import 'package:flutter/material.dart';
 import '../../common/color_extention.dart';
 import '../../data/workout_plan_data.dart';
 import '../../data/exercise_details_data.dart';
+import '../view/exercise/edit_plan_view.dart';
 import '../view/exercise/exercise_detail_view.dart';
 import '../view/exercise/exercise_player_view.dart';
+import '../service/workout_progress_service.dart';
 
 class WorkoutDayView extends StatefulWidget {
   final int dayNumber;
@@ -21,43 +23,68 @@ class WorkoutDayView extends StatefulWidget {
 class _WorkoutDayViewState extends State<WorkoutDayView> {
   bool warmUp = false;
 
+  late List<Map<String, dynamic>> exercises;
+  WorkoutProgress _progress = const WorkoutProgress(
+    started: false,
+    completed: false,
+    currentExerciseIndex: 0,
+    totalExercises: 0,
+  );
+
+  bool _loadingProgress = true;
+
+  @override
+  void initState() {
+    super.initState();
+
+    final Map<String, dynamic> data =
+    workoutPlanData[widget.dayNumber - 1];
+
+    exercises = List<dynamic>.from(data["exercises"])
+        .map<Map<String, dynamic>>(
+          (item) => Map<String, dynamic>.from(item),
+    )
+        .toList();
+
+    _loadProgress();
+  }
+  Future<void> _loadProgress() async {
+    final WorkoutProgress progress =
+    await WorkoutProgressService.getProgress(
+      widget.dayNumber,
+    );
+
+    if (!mounted) return;
+
+    setState(() {
+      _progress = progress;
+      _loadingProgress = false;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final Map<String, dynamic> data =
     workoutPlanData[widget.dayNumber - 1];
 
-    final List<dynamic> exercises =
-    List<dynamic>.from(data["exercises"]);
-
     return Scaffold(
       backgroundColor: Colors.white,
-
       body: SafeArea(
         child: Column(
           children: [
-            /// ==========================================
-            /// SCROLLABLE BODY
-            /// ==========================================
-
             Expanded(
               child: SingleChildScrollView(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
-
                   children: [
-                    /// ==========================================
                     /// TOP HEADER
-                    /// ==========================================
-
                     Container(
                       height: 330,
                       width: double.infinity,
-
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
-
                           colors: [
                             TColor.purpleSoft,
                             const Color(0xffF7F1FF),
@@ -65,20 +92,15 @@ class _WorkoutDayViewState extends State<WorkoutDayView> {
                           ],
                         ),
                       ),
-
                       child: Stack(
                         children: [
-                          /// BACK BUTTON
-
                           Positioned(
                             left: 15,
                             top: 15,
-
                             child: IconButton(
                               onPressed: () {
                                 Navigator.pop(context);
                               },
-
                               icon: const Icon(
                                 Icons.arrow_back,
                                 size: 30,
@@ -86,13 +108,9 @@ class _WorkoutDayViewState extends State<WorkoutDayView> {
                               ),
                             ),
                           ),
-
-                          /// HEADER IMAGE
-
                           Positioned(
                             right: 0,
                             bottom: 0,
-
                             child: Image.asset(
                               "assets/img/2.png",
                               width: 190,
@@ -100,73 +118,53 @@ class _WorkoutDayViewState extends State<WorkoutDayView> {
                               fit: BoxFit.cover,
                             ),
                           ),
-
-                          /// HEADER TEXT
-
                           Positioned(
                             left: 25,
                             top: 95,
-
                             child: Column(
-                              crossAxisAlignment:
-                              CrossAxisAlignment.start,
-
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
                                   "DAY ${data["day"]}",
-
                                   style: const TextStyle(
                                     fontSize: 42,
                                     fontWeight: FontWeight.w900,
                                     color: Colors.black,
                                   ),
                                 ),
-
                                 const SizedBox(height: 15),
-
                                 const Text(
                                   "LOSE WEIGHT IN 30 DAYS",
-
                                   style: TextStyle(
                                     fontSize: 18,
                                     fontWeight: FontWeight.w800,
                                     color: Colors.black,
                                   ),
                                 ),
-
                                 const SizedBox(height: 20),
-
                                 Container(
                                   padding: const EdgeInsets.symmetric(
                                     horizontal: 14,
                                     vertical: 8,
                                   ),
-
                                   decoration: BoxDecoration(
                                     color: TColor.primaryLight,
-                                    borderRadius:
-                                    BorderRadius.circular(20),
+                                    borderRadius: BorderRadius.circular(20),
                                   ),
-
                                   child: Row(
                                     mainAxisSize: MainAxisSize.min,
-
                                     children: [
                                       Icon(
                                         Icons.lightbulb_outline,
                                         size: 18,
                                         color: TColor.primary,
                                       ),
-
                                       const SizedBox(width: 6),
-
                                       Text(
                                         "FAQ",
-
                                         style: TextStyle(
                                           color: TColor.primary,
-                                          fontWeight:
-                                          FontWeight.w700,
+                                          fontWeight: FontWeight.w700,
                                         ),
                                       ),
                                     ],
@@ -181,93 +179,60 @@ class _WorkoutDayViewState extends State<WorkoutDayView> {
 
                     const SizedBox(height: 20),
 
-                    /// ==========================================
-                    /// BASIC + FOCUS AREA CARD
-                    /// ==========================================
-
+                    /// BASIC + FOCUS AREA
                     Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 20,
-                      ),
-
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
                       child: Container(
                         padding: const EdgeInsets.all(20),
-
                         decoration: BoxDecoration(
                           color: const Color(0xffF8F5FC),
-                          borderRadius:
-                          BorderRadius.circular(24),
+                          borderRadius: BorderRadius.circular(24),
                         ),
-
                         child: Row(
-                          crossAxisAlignment:
-                          CrossAxisAlignment.start,
-
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            /// BASIC INFORMATION
-
                             Expanded(
                               child: Column(
-                                crossAxisAlignment:
-                                CrossAxisAlignment.start,
-
+                                crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
                                     "Basic",
-
                                     style: TextStyle(
                                       color: TColor.primary,
                                       fontSize: 20,
-                                      fontWeight:
-                                      FontWeight.w700,
+                                      fontWeight: FontWeight.w700,
                                     ),
                                   ),
-
                                   const SizedBox(height: 22),
-
                                   _buildInfoRow(
-                                    icon:
-                                    Icons.local_fire_department,
-                                    text:
-                                    data["calorie"].toString(),
+                                    icon: Icons.local_fire_department,
+                                    text: data["calorie"].toString(),
                                   ),
-
                                   const SizedBox(height: 20),
-
                                   _buildInfoRow(
-                                    icon:
-                                    Icons.access_time_filled,
+                                    icon: Icons.access_time_filled,
                                     text: data["time"].toString(),
                                   ),
-
                                   const SizedBox(height: 20),
-
                                   _buildInfoRow(
                                     icon: Icons.layers_rounded,
                                     text: data["level"].toString(),
                                   ),
-
                                   const SizedBox(height: 25),
-
                                   InkWell(
                                     onTap: () {},
-
                                     child: Row(
                                       children: [
                                         Expanded(
                                           child: Text(
                                             "Workout settings",
-
                                             style: TextStyle(
-                                              color:
-                                              TColor.primary,
+                                              color: TColor.primary,
                                               fontSize: 16,
-                                              fontWeight:
-                                              FontWeight.w700,
+                                              fontWeight: FontWeight.w700,
                                             ),
                                           ),
                                         ),
-
                                         const Icon(
                                           Icons.arrow_forward_ios,
                                           size: 16,
@@ -279,32 +244,23 @@ class _WorkoutDayViewState extends State<WorkoutDayView> {
                                 ],
                               ),
                             ),
-
                             const SizedBox(width: 15),
-
-                            /// FOCUS AREA
-
                             Expanded(
                               child: Column(
                                 children: [
                                   Text(
                                     "Focus Areas",
-
                                     style: TextStyle(
                                       color: TColor.primary,
                                       fontSize: 20,
-                                      fontWeight:
-                                      FontWeight.w700,
+                                      fontWeight: FontWeight.w700,
                                     ),
                                   ),
-
                                   const SizedBox(height: 20),
-
                                   Container(
                                     height: 180,
                                     width: double.infinity,
                                     alignment: Alignment.center,
-
                                     child: Image.asset(
                                       "assets/img/me1.png",
                                       width: 110,
@@ -322,32 +278,22 @@ class _WorkoutDayViewState extends State<WorkoutDayView> {
 
                     const SizedBox(height: 28),
 
-                    /// ==========================================
                     /// WARM-UP
-                    /// ==========================================
-
                     Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 20,
-                      ),
-
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
                       child: Row(
                         children: [
                           const Text(
                             "Warm-up",
-
                             style: TextStyle(
                               fontSize: 25,
                               fontWeight: FontWeight.w800,
                             ),
                           ),
-
                           const Spacer(),
-
                           Switch(
                             value: warmUp,
                             activeColor: TColor.primary,
-
                             onChanged: (value) {
                               setState(() {
                                 warmUp = value;
@@ -360,34 +306,46 @@ class _WorkoutDayViewState extends State<WorkoutDayView> {
 
                     const SizedBox(height: 20),
 
-                    /// ==========================================
-                    /// EXERCISES TITLE
-                    /// ==========================================
-
+                    /// EXERCISE TITLE
                     Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 20,
-                      ),
-
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
                       child: Row(
                         children: [
                           Text(
                             "Exercises (${exercises.length})",
-
                             style: const TextStyle(
                               fontSize: 25,
                               fontWeight: FontWeight.w800,
                             ),
                           ),
-
                           const Spacer(),
-
                           TextButton(
-                            onPressed: () {},
+                            onPressed: () async {
+                              final List<Map<String, dynamic>>?
+                              updatedExercises =
+                              await Navigator.push<
+                                  List<Map<String, dynamic>>>(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => EditPlanView(
+                                    exercises: exercises,
+                                  ),
+                                ),
+                              );
 
+                              if (updatedExercises != null && mounted) {
+                                setState(() {
+                                  exercises = updatedExercises
+                                      .map(
+                                        (item) =>
+                                    Map<String, dynamic>.from(item),
+                                  )
+                                      .toList();
+                                });
+                              }
+                            },
                             child: Text(
                               "Edit >",
-
                               style: TextStyle(
                                 color: TColor.primary,
                                 fontSize: 17,
@@ -401,18 +359,11 @@ class _WorkoutDayViewState extends State<WorkoutDayView> {
 
                     const SizedBox(height: 10),
 
-                    /// ==========================================
                     /// EXERCISE LIST
-                    /// ==========================================
-
                     ListView.builder(
                       shrinkWrap: true,
-
-                      physics:
-                      const NeverScrollableScrollPhysics(),
-
+                      physics: const NeverScrollableScrollPhysics(),
                       itemCount: exercises.length,
-
                       itemBuilder: (context, index) {
                         final Map<String, dynamic> exercise =
                         Map<String, dynamic>.from(
@@ -422,7 +373,6 @@ class _WorkoutDayViewState extends State<WorkoutDayView> {
                         return _buildExerciseItem(
                           exercise,
                           index,
-                          exercises.length,
                         );
                       },
                     ),
@@ -433,65 +383,77 @@ class _WorkoutDayViewState extends State<WorkoutDayView> {
               ),
             ),
 
-            /// ==========================================
-            /// BOTTOM START BUTTON
-            /// ==========================================
-
+            /// START BUTTON
             Container(
               color: Colors.white,
-
               padding: const EdgeInsets.fromLTRB(
                 20,
                 12,
                 20,
                 18,
               ),
-
               child: SizedBox(
                 width: double.infinity,
                 height: 60,
-
                 child: ElevatedButton(
+                  onPressed: _loadingProgress
+                      ? null
+                      : () async {
+                    final List<Map<String, dynamic>> playerExercises =
+                    exercises
+                        .map<Map<String, dynamic>>(
+                          (item) =>
+                      Map<String, dynamic>.from(item),
+                    )
+                        .toList();
 
-                    onPressed: () {
-                      final List<Map<String, dynamic>> playerExercises =
-                      exercises.map<Map<String, dynamic>>((item) {
-                        return Map<String, dynamic>.from(item);
-                      }).toList();
+                    int startIndex = 0;
 
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => ExercisePlayerView(
-                            exercises: playerExercises,
-                            dayNumber: widget.dayNumber,
-                            startIndex: 0,
-                          ),
-                        ),
+                    if (_progress.started && !_progress.completed) {
+                      startIndex = _progress.currentExerciseIndex;
+                    }
+
+                    if (startIndex < 0 ||
+                        startIndex >= playerExercises.length) {
+                      startIndex = 0;
+                    }
+
+                    if (_progress.completed) {
+                      await WorkoutProgressService.resetWorkout(
+                        widget.dayNumber,
                       );
+                    }
 
-                    /// পরে Exercise Player page open হবে
+                    await Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => ExercisePlayerView(
+                          exercises: playerExercises,
+                          dayNumber: widget.dayNumber,
+                          startIndex: startIndex,
+                        ),
+                      ),
+                    );
+
+                    await _loadProgress();
                   },
-
                   style: ElevatedButton.styleFrom(
                     backgroundColor: TColor.primary,
                     foregroundColor: Colors.white,
                     elevation: 0,
-
                     shape: RoundedRectangleBorder(
-                      borderRadius:
-                      BorderRadius.circular(22),
+                      borderRadius: BorderRadius.circular(23),
                     ),
                   ),
-
-                  child: const Text(
-                    "START",
-
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
+                  child: Text(
+                  _loadingProgress
+                  ? "LOADING..."
+        : _progress.buttonText,
+    style: const TextStyle(
+    fontSize: 21,
+    fontWeight: FontWeight.w800,
+    ),
+    ),
                 ),
               ),
             ),
@@ -500,10 +462,6 @@ class _WorkoutDayViewState extends State<WorkoutDayView> {
       ),
     );
   }
-
-  /// ==========================================
-  /// BASIC INFO ROW
-  /// ==========================================
 
   Widget _buildInfoRow({
     required IconData icon,
@@ -516,13 +474,10 @@ class _WorkoutDayViewState extends State<WorkoutDayView> {
           color: Colors.grey,
           size: 25,
         ),
-
         const SizedBox(width: 12),
-
         Expanded(
           child: Text(
             text,
-
             style: const TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w700,
@@ -533,18 +488,12 @@ class _WorkoutDayViewState extends State<WorkoutDayView> {
     );
   }
 
-  /// ==========================================
-  /// EXERCISE ITEM
-  /// ==========================================
-
   Widget _buildExerciseItem(
       Map<String, dynamic> exercise,
       int index,
-      int totalExercises,
       ) {
     return InkWell(
       borderRadius: BorderRadius.circular(15),
-
       onTap: () {
         final String exerciseName =
         exercise["name"].toString();
@@ -560,19 +509,12 @@ class _WorkoutDayViewState extends State<WorkoutDayView> {
               ),
             ),
           );
-
           return;
         }
 
         final List<Map<String, dynamic>> fullExerciseDetails = [];
 
-        final Map<String, dynamic> data =
-        workoutPlanData[widget.dayNumber - 1];
-
-        final List<dynamic> dayExercises =
-        List<dynamic>.from(data["exercises"]);
-
-        for (final dynamic item in dayExercises) {
+        for (final Map<String, dynamic> item in exercises) {
           final Map<String, dynamic> workoutExercise =
           Map<String, dynamic>.from(item);
 
@@ -601,7 +543,6 @@ class _WorkoutDayViewState extends State<WorkoutDayView> {
               ),
             ),
           );
-
           return;
         }
 
@@ -615,35 +556,25 @@ class _WorkoutDayViewState extends State<WorkoutDayView> {
           ),
         );
       },
-
       child: Padding(
         padding: const EdgeInsets.symmetric(
           horizontal: 20,
           vertical: 10,
         ),
-
         child: Row(
           children: [
-            /// GIF
-
             Container(
               width: 120,
               height: 100,
-
               decoration: BoxDecoration(
                 color: const Color(0xffFAF8FD),
-                borderRadius:
-                BorderRadius.circular(15),
+                borderRadius: BorderRadius.circular(15),
               ),
-
               child: ClipRRect(
-                borderRadius:
-                BorderRadius.circular(15),
-
+                borderRadius: BorderRadius.circular(15),
                 child: Image.asset(
                   exercise["gif"].toString(),
                   fit: BoxFit.contain,
-
                   errorBuilder: (
                       context,
                       error,
@@ -658,31 +589,21 @@ class _WorkoutDayViewState extends State<WorkoutDayView> {
                 ),
               ),
             ),
-
             const SizedBox(width: 20),
-
-            /// EXERCISE NAME + VALUE
-
             Expanded(
               child: Column(
-                crossAxisAlignment:
-                CrossAxisAlignment.start,
-
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     exercise["name"].toString(),
-
                     style: const TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.w800,
                     ),
                   ),
-
                   const SizedBox(height: 8),
-
                   Text(
                     exercise["value"].toString(),
-
                     style: TextStyle(
                       fontSize: 17,
                       color: TColor.sceondarText,
@@ -691,7 +612,6 @@ class _WorkoutDayViewState extends State<WorkoutDayView> {
                 ],
               ),
             ),
-
             Icon(
               Icons.arrow_forward_ios,
               size: 18,

@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_tts/flutter_tts.dart';
+import '../../service/workout_progress_service.dart';
 
 import '../../common/color_extention.dart';
 
@@ -71,6 +72,14 @@ class _ExercisePlayerViewState extends State<ExercisePlayerView> {
     _setupVoice();
     _prepareCurrentExercise();
     _startReadyCountdown();
+    _saveWorkoutStarted();
+  }
+  Future<void> _saveWorkoutStarted() async {
+    await WorkoutProgressService.startWorkout(
+      dayNumber: widget.dayNumber,
+      totalExercises: widget.exercises.length,
+      startIndex: currentIndex,
+    );
   }
 
   Future<void> _setupVoice() async {
@@ -264,11 +273,11 @@ class _ExercisePlayerViewState extends State<ExercisePlayerView> {
   /// NAVIGATION
   /// =====================================================
 
-  void _goToNextExercise() {
+  Future<void> _goToNextExercise() async {
     _timer?.cancel();
 
     if (currentIndex >= widget.exercises.length - 1) {
-      _finishWorkout();
+      await _finishWorkout();
       return;
     }
 
@@ -279,11 +288,17 @@ class _ExercisePlayerViewState extends State<ExercisePlayerView> {
       isPaused = false;
     });
 
+    await WorkoutProgressService.saveCurrentExercise(
+      dayNumber: widget.dayNumber,
+      currentExerciseIndex: currentIndex,
+      totalExercises: widget.exercises.length,
+    );
+
     _prepareCurrentExercise();
     _startReadyCountdown();
   }
 
-  void _goToPreviousExercise() {
+  Future<void> _goToPreviousExercise() async {
     if (currentIndex <= 0) return;
 
     _timer?.cancel();
@@ -294,6 +309,12 @@ class _ExercisePlayerViewState extends State<ExercisePlayerView> {
       isReadyScreen = true;
       isPaused = false;
     });
+
+    await WorkoutProgressService.saveCurrentExercise(
+      dayNumber: widget.dayNumber,
+      currentExerciseIndex: currentIndex,
+      totalExercises: widget.exercises.length,
+    );
 
     _prepareCurrentExercise();
     _startReadyCountdown();
@@ -358,8 +379,15 @@ class _ExercisePlayerViewState extends State<ExercisePlayerView> {
   /// COMPLETE
   /// =====================================================
 
-  void _finishWorkout() {
+  Future<void> _finishWorkout() async {
     _timer?.cancel();
+
+    await WorkoutProgressService.completeWorkout(
+      dayNumber: widget.dayNumber,
+      totalExercises: widget.exercises.length,
+    );
+
+    if (!mounted) return;
 
     setState(() {
       isWorkoutComplete = true;
@@ -420,11 +448,19 @@ class _ExercisePlayerViewState extends State<ExercisePlayerView> {
       children: [
         _circleButton(
           icon: Icons.arrow_back,
-          onTap: () {
+          onTap: () async {
             _timer?.cancel();
-            _flutterTts.stop();
+            await _flutterTts.stop();
 
-            Navigator.pop(context);
+            await WorkoutProgressService.saveCurrentExercise(
+              dayNumber: widget.dayNumber,
+              currentExerciseIndex: currentIndex,
+              totalExercises: widget.exercises.length,
+            );
+
+            if (!context.mounted) return;
+
+            Navigator.pop(context, true);
           },
         ),
 
