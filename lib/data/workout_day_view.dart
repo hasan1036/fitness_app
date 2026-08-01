@@ -305,7 +305,7 @@ class _WorkoutDayViewState extends State<WorkoutDayView> {
                                     child: Image.asset(
                                       "assets/img/me1.png",
                                       width: 110,
-                                      height: 170,
+                                      height: 190,
                                       fit: BoxFit.contain,
                                     ),
                                   ),
