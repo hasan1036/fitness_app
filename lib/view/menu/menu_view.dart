@@ -1,25 +1,24 @@
+import 'dart:io';
+
+import 'package:image_picker/image_picker.dart';
+
+import '../../reports/reports_view.dart';
+import '../../service/profile_service.dart';
 import 'package:flutter/material.dart';
 
 import '../../common/color_extention.dart';
-
 import '../../data/workout_day_view.dart';
+import '../../service/workout_progress_service.dart';
+import '../../service/workout_stats_service.dart';
+
 import '../exercise/exercise_view_2.dart';
 import '../home/home_view.dart';
 import '../meal_plan/mean_plan_view.dart';
 import '../running/running_view.dart';
 import '../schedule/schedule_view.dart';
 import '../weight/weight_view.dart';
+import '../../common_widget/app_drawer.dart';
 import '../workout/workout_view.dart';
-import 'package:flutter/material.dart';
-
-import '../../common/color_extention.dart';
-
-import '../../data/workout_day_view.dart';
-import '../../service/workout_progress_service.dart';
-
-
-
-
 
 
 
@@ -31,8 +30,62 @@ class MenuView extends StatefulWidget {
 }
 
 class _MenuViewState extends State<MenuView> {
+  final GlobalKey<ScaffoldState> _scaffoldKey =
+  GlobalKey<ScaffoldState>();
+
+  String get greeting {
+    final hour = DateTime.now().hour;
+
+    if (hour < 12) {
+      return "Good Morning 👋";
+    } else if (hour < 17) {
+      return "Good Afternoon ☀️";
+    } else if (hour < 21) {
+      return "Good Evening 🌇";
+    } else {
+      return "Good Night 🌙";
+    }
+  }
+  String get currentDate {
+    final now = DateTime.now();
+
+    const weekdays = [
+      "Monday",
+      "Tuesday",
+      "Wednesday",
+      "Thursday",
+      "Friday",
+      "Saturday",
+      "Sunday",
+    ];
+
+    const months = [
+      "January",
+      "February",
+      "March",
+      "April",
+      "May",
+      "June",
+      "July",
+      "August",
+      "September",
+      "October",
+      "November",
+      "December",
+    ];
+
+    return "${weekdays[now.weekday - 1]}, ${months[now.month - 1]} ${now.day}";
+  }
+  final ImagePicker _imagePicker = ImagePicker();
+
+  String profileName = "Code For Jannat";
+  String? profileImagePath;
   /// বর্তমানে কোন Day selected
   int selectedDay = 0;
+
+  int totalWorkouts = 0;
+  double totalCalories = 0;
+  int currentStreak = 0;
 
   /// =====================================================
   /// QUICK ACCESS
@@ -87,28 +140,136 @@ class _MenuViewState extends State<MenuView> {
 
   late final List<Map<String, dynamic>> dayList;
 
+
   @override
   void initState() {
     super.initState();
 
-    /// এখানে Day 1 থেকে Day 30 automatic তৈরি হবে
     dayList = List.generate(30, (index) {
       final int day = index + 1;
 
       return {
         "day": "Day $day",
         "time": "5 min",
-
-        /// আপাতত প্রতিদিন calorie একটু একটু বাড়ছে
         "calorie": "${(68.1 + index).toStringAsFixed(1)} kcal",
-
-        /// তোমার existing 3টা image ঘুরিয়ে ব্যবহার করছি
         "image": index % 3 == 0
             ? "assets/img/2.png"
             : index % 3 == 1
             ? "assets/img/3.png"
             : "assets/img/4.png",
       };
+    });
+
+    _loadWorkoutStats();
+    _loadProfile();
+  }
+
+  Future<void> _loadProfile() async {
+    final String savedName =
+    await ProfileService.getName();
+
+    final String? savedImagePath =
+    await ProfileService.getImagePath();
+
+    if (!mounted) return;
+
+    setState(() {
+      profileName = savedName;
+      profileImagePath = savedImagePath;
+    });
+  }
+
+  Future<void> _pickProfileImage() async {
+    final XFile? file = await _imagePicker.pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 85,
+    );
+
+    if (file == null) return;
+
+    await ProfileService.saveImagePath(file.path);
+
+    if (!mounted) return;
+
+    setState(() {
+      profileImagePath = file.path;
+    });
+  }
+
+  Future<void> _changeName() async {
+    final TextEditingController controller =
+    TextEditingController(
+      text: profileName,
+    );
+
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: const Text("Change Name"),
+
+          content: TextField(
+            controller: controller,
+            autofocus: true,
+            decoration: const InputDecoration(
+              hintText: "Enter your name",
+              border: OutlineInputBorder(),
+            ),
+          ),
+
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(dialogContext);
+              },
+              child: const Text("Cancel"),
+            ),
+
+            ElevatedButton(
+              onPressed: () async {
+                final String name =
+                controller.text.trim();
+
+                if (name.isEmpty) return;
+
+                await ProfileService.saveName(name);
+
+                if (!mounted) return;
+
+                setState(() {
+                  profileName = name;
+                });
+
+                if (dialogContext.mounted) {
+                  Navigator.pop(dialogContext);
+                }
+              },
+              child: const Text("Save"),
+            ),
+          ],
+        );
+      },
+    );
+
+    controller.dispose();
+  }
+
+  Future<void> _loadWorkoutStats() async {
+    final int workouts =
+    await WorkoutStatsService.getWorkout();
+
+    final double calories =
+    await WorkoutStatsService.getCalories();
+
+    final int streak =
+    await WorkoutStatsService.getStreak();
+
+    if (!mounted) return;
+
+    setState(() {
+      totalWorkouts = workouts;
+      totalCalories = calories;
+      currentStreak = streak;
     });
   }
 
@@ -119,13 +280,22 @@ class _MenuViewState extends State<MenuView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: TColor.background,
+      key: _scaffoldKey,
+      drawer: AppDrawer(
+        profileName: profileName,
+        profileImagePath: profileImagePath,
+      ),
+
+      backgroundColor: Colors.white,
 
       body: SafeArea(
         child: SingleChildScrollView(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+
+
+
               /// =================================================
               /// PURPLE PROFILE HEADER
               /// =================================================
@@ -440,7 +610,7 @@ class _MenuViewState extends State<MenuView> {
   Widget _buildHeader() {
     return Container(
       width: double.infinity,
-      height: 290,
+      height: 300,
 
       decoration: BoxDecoration(
         color: TColor.primary,
@@ -487,6 +657,7 @@ class _MenuViewState extends State<MenuView> {
                 children: [
                   IconButton(
                     onPressed: () {
+                      _scaffoldKey.currentState?.openDrawer();
                       /// Future Drawer
                     },
 
@@ -529,7 +700,7 @@ class _MenuViewState extends State<MenuView> {
                 ],
               ),
 
-              const Spacer(),
+
 
               /// =================================================
               /// PROFILE
@@ -545,12 +716,15 @@ class _MenuViewState extends State<MenuView> {
                       color: Colors.white.withOpacity(0.20),
                     ),
 
-                    child: const CircleAvatar(
-                      radius: 37,
-                      backgroundColor: Colors.white,
-
-                      backgroundImage: AssetImage(
-                        "assets/img/u1.png",
+                    child: GestureDetector(
+                      onTap: _pickProfileImage,
+                      child: CircleAvatar(
+                        radius: 37,
+                        backgroundColor: Colors.white,
+                        backgroundImage: profileImagePath != null
+                            ? FileImage(File(profileImagePath!))
+                            : const AssetImage("assets/img/u1.png")
+                        as ImageProvider,
                       ),
                     ),
                   ),
@@ -563,23 +737,49 @@ class _MenuViewState extends State<MenuView> {
                       CrossAxisAlignment.start,
 
                       children: [
-                        const Text(
-                          "Good Morning 👋",
-                          style: TextStyle(
+                        Text(
+                          greeting,
+                          style: const TextStyle(
                             color: Colors.white,
                             fontSize: 15,
                             fontWeight: FontWeight.w500,
                           ),
                         ),
 
-                        const SizedBox(height: 4),
+                        const SizedBox(height: 3),
 
-                        const Text(
-                          "Code For Any",
+                        Text(
+                          currentDate,
                           style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 27,
-                            fontWeight: FontWeight.w800,
+                            color: Colors.white.withOpacity(0.85),
+                            fontSize: 13,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+
+                        GestureDetector(
+                          onTap: _changeName,
+                          child: Row(
+                            children: [
+                              Flexible(
+                                child: Text(
+                                  profileName,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 27,
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 6),
+                              const Icon(
+                                Icons.edit,
+                                color: Colors.white,
+                                size: 18,
+                              ),
+                            ],
                           ),
                         ),
 
@@ -623,7 +823,7 @@ class _MenuViewState extends State<MenuView> {
                     child: _buildStatCard(
                       icon: Icons.fitness_center_rounded,
                       title: "Workouts",
-                      value: "12",
+                      value: totalWorkouts.toString(),
                       bottom: "This Week",
                     ),
                   ),
@@ -634,7 +834,7 @@ class _MenuViewState extends State<MenuView> {
                     child: _buildStatCard(
                       icon: Icons.local_fire_department,
                       title: "Calories",
-                      value: "856",
+                      value: totalCalories.toStringAsFixed(0),
                       bottom: "Burned",
                     ),
                   ),
@@ -645,7 +845,7 @@ class _MenuViewState extends State<MenuView> {
                     child: _buildStatCard(
                       icon: Icons.bolt_rounded,
                       title: "Streak",
-                      value: "7",
+                      value: currentStreak.toString(),
                       bottom: "Days",
                     ),
                   ),
@@ -1203,8 +1403,8 @@ totalExercises: 0,
                             InkWell(
                               borderRadius:
                               BorderRadius.circular(30),
-                              onTap: () {
-                                Navigator.push(
+                              onTap: () async {
+                                await Navigator.push(
                                   context,
                                   MaterialPageRoute(
                                     builder: (_) => WorkoutDayView(
@@ -1212,6 +1412,12 @@ totalExercises: 0,
                                     ),
                                   ),
                                 );
+
+                                if (!mounted) return;
+
+                                await _loadWorkoutStats();
+
+                                setState(() {});
                               },
 
                               child: Container(
@@ -1476,11 +1682,10 @@ totalExercises: 0,
             "Reports",
             false,
                 () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text(
-                    "Reports screen coming next",
-                  ),
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const ReportsView(),
                 ),
               );
             },

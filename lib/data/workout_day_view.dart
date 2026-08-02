@@ -400,12 +400,9 @@ class _WorkoutDayViewState extends State<WorkoutDayView> {
                       ? null
                       : () async {
                     final List<Map<String, dynamic>> playerExercises =
-                    exercises
-                        .map<Map<String, dynamic>>(
-                          (item) =>
-                      Map<String, dynamic>.from(item),
-                    )
-                        .toList();
+                    exercises.map<Map<String, dynamic>>((item) {
+                      return Map<String, dynamic>.from(item);
+                    }).toList();
 
                     int startIndex = 0;
 
@@ -418,10 +415,10 @@ class _WorkoutDayViewState extends State<WorkoutDayView> {
                       startIndex = 0;
                     }
 
+                    // REPEAT করলে প্রথম exercise থেকে শুরু হবে।
+                    // এখানে resetWorkout() বা markStatsCounted() call হবে না।
                     if (_progress.completed) {
-                      await WorkoutProgressService.resetWorkout(
-                        widget.dayNumber,
-                      );
+                      startIndex = 0;
                     }
 
                     await Navigator.push(
@@ -435,6 +432,8 @@ class _WorkoutDayViewState extends State<WorkoutDayView> {
                       ),
                     );
 
+                    if (!mounted) return;
+
                     await _loadProgress();
                   },
                   style: ElevatedButton.styleFrom(
@@ -446,14 +445,14 @@ class _WorkoutDayViewState extends State<WorkoutDayView> {
                     ),
                   ),
                   child: Text(
-                  _loadingProgress
-                  ? "LOADING..."
-        : _progress.buttonText,
-    style: const TextStyle(
-    fontSize: 21,
-    fontWeight: FontWeight.w800,
-    ),
-    ),
+                    _loadingProgress
+                        ? "LOADING..."
+                        : _progress.buttonText,
+                    style: const TextStyle(
+                      fontSize: 21,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
                 ),
               ),
             ),
@@ -492,132 +491,292 @@ class _WorkoutDayViewState extends State<WorkoutDayView> {
       Map<String, dynamic> exercise,
       int index,
       ) {
-    return InkWell(
-      borderRadius: BorderRadius.circular(15),
-      onTap: () {
-        final String exerciseName =
-        exercise["name"].toString();
+    /// এই exercise শেষ হয়েছে কি না
+    final bool isCompleted =
+        _progress.completed ||
+            (_progress.started &&
+                index < _progress.currentExerciseIndex);
 
-        final Map<String, dynamic>? details =
-        exerciseDetailsData[exerciseName];
+    /// বর্তমানে এই exercise-টাই চলবে কি না
+    final bool isCurrent =
+        _progress.started &&
+            !_progress.completed &&
+            index == _progress.currentExerciseIndex;
 
-        if (details == null) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                "$exerciseName exercise-এর details পাওয়া যায়নি",
-              ),
-            ),
-          );
-          return;
-        }
+    return Padding(
+      padding: const EdgeInsets.symmetric(
+        horizontal: 20,
+        vertical: 7,
+      ),
 
-        final List<Map<String, dynamic>> fullExerciseDetails = [];
+      child: InkWell(
+        borderRadius: BorderRadius.circular(18),
 
-        for (final Map<String, dynamic> item in exercises) {
-          final Map<String, dynamic> workoutExercise =
-          Map<String, dynamic>.from(item);
+        onTap: () {
+          final String exerciseName =
+          exercise["name"].toString();
 
-          final String name =
-          workoutExercise["name"].toString();
+          final Map<String, dynamic>? details =
+          exerciseDetailsData[exerciseName];
 
-          final Map<String, dynamic>? detail =
-          exerciseDetailsData[name];
-
-          if (detail != null) {
-            fullExerciseDetails.add({
-              ...detail,
-              "value":
-              workoutExercise["value"] ?? detail["value"],
-              "gif":
-              workoutExercise["gif"] ?? detail["gif"],
-            });
-          }
-        }
-
-        if (fullExerciseDetails.isEmpty) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text(
-                "Exercise details পাওয়া যায়নি",
-              ),
-            ),
-          );
-          return;
-        }
-
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => ExerciseDetailView(
-              exercises: fullExerciseDetails,
-              initialIndex: index,
-            ),
-          ),
-        );
-      },
-      child: Padding(
-        padding: const EdgeInsets.symmetric(
-          horizontal: 20,
-          vertical: 10,
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 120,
-              height: 100,
-              decoration: BoxDecoration(
-                color: const Color(0xffFAF8FD),
-                borderRadius: BorderRadius.circular(15),
-              ),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(15),
-                child: Image.asset(
-                  exercise["gif"].toString(),
-                  fit: BoxFit.contain,
-                  errorBuilder: (
-                      context,
-                      error,
-                      stackTrace,
-                      ) {
-                    return Icon(
-                      Icons.fitness_center,
-                      color: TColor.primary,
-                      size: 35,
-                    );
-                  },
+          if (details == null) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(
+                  "$exerciseName exercise-এর details পাওয়া যায়নি",
                 ),
               ),
-            ),
-            const SizedBox(width: 20),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    exercise["name"].toString(),
-                    style: const TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    exercise["value"].toString(),
-                    style: TextStyle(
-                      fontSize: 17,
-                      color: TColor.sceondarText,
-                    ),
-                  ),
-                ],
+            );
+            return;
+          }
+
+          final List<Map<String, dynamic>>
+          fullExerciseDetails = [];
+
+          for (final Map<String, dynamic> item
+          in exercises) {
+            final Map<String, dynamic> workoutExercise =
+            Map<String, dynamic>.from(item);
+
+            final String name =
+            workoutExercise["name"].toString();
+
+            final Map<String, dynamic>? detail =
+            exerciseDetailsData[name];
+
+            if (detail != null) {
+              fullExerciseDetails.add({
+                ...detail,
+                "value": workoutExercise["value"] ??
+                    detail["value"],
+                "gif": workoutExercise["gif"] ??
+                    detail["gif"],
+              });
+            }
+          }
+
+          if (fullExerciseDetails.isEmpty) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text(
+                  "Exercise details পাওয়া যায়নি",
+                ),
+              ),
+            );
+            return;
+          }
+
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => ExerciseDetailView(
+                exercises: fullExerciseDetails,
+                initialIndex: index,
               ),
             ),
-            Icon(
-              Icons.arrow_forward_ios,
-              size: 18,
-              color: TColor.primary,
+          );
+        },
+
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 250),
+
+          padding: const EdgeInsets.all(10),
+
+          decoration: BoxDecoration(
+            color: isCompleted
+                ? Colors.green.withOpacity(0.08)
+                : isCurrent
+                ? TColor.primaryLight
+                : Colors.white,
+
+            borderRadius: BorderRadius.circular(18),
+
+            border: Border.all(
+              width: isCurrent ? 2 : 1,
+
+              color: isCompleted
+                  ? Colors.green.withOpacity(0.35)
+                  : isCurrent
+                  ? TColor.primary
+                  : const Color(0xffEEEAF2),
             ),
-          ],
+
+            boxShadow: const [
+              BoxShadow(
+                color: Color(0x0D000000),
+                blurRadius: 10,
+                offset: Offset(0, 4),
+              ),
+            ],
+          ),
+
+          child: Row(
+            children: [
+              /// GIF + CHECK MARK
+
+              Stack(
+                children: [
+                  Container(
+                    width: 110,
+                    height: 95,
+
+                    decoration: BoxDecoration(
+                      color: const Color(0xffFAF8FD),
+                      borderRadius: BorderRadius.circular(15),
+                    ),
+
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(15),
+
+                      child: Opacity(
+                        opacity: isCompleted ? 0.45 : 1.0,
+
+                        child: Image.asset(
+                          exercise["gif"].toString(),
+                          fit: BoxFit.contain,
+
+                          errorBuilder: (
+                              context,
+                              error,
+                              stackTrace,
+                              ) {
+                            return Icon(
+                              Icons.fitness_center,
+                              color: TColor.primary,
+                              size: 35,
+                            );
+                          },
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  if (isCompleted)
+                    Positioned(
+                      right: 6,
+                      top: 6,
+
+                      child: Container(
+                        width: 28,
+                        height: 28,
+
+                        decoration: const BoxDecoration(
+                          color: Colors.green,
+                          shape: BoxShape.circle,
+                        ),
+
+                        child: const Icon(
+                          Icons.check_rounded,
+                          color: Colors.white,
+                          size: 19,
+                        ),
+                      ),
+                    ),
+
+                  if (isCurrent)
+                    Positioned(
+                      left: 6,
+                      top: 6,
+
+                      child: Container(
+                        width: 28,
+                        height: 28,
+
+                        decoration: BoxDecoration(
+                          color: TColor.primary,
+                          shape: BoxShape.circle,
+                        ),
+
+                        child: const Icon(
+                          Icons.play_arrow_rounded,
+                          color: Colors.white,
+                          size: 20,
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+
+              const SizedBox(width: 17),
+
+              /// NAME + STATUS
+
+              Expanded(
+                child: Column(
+                  crossAxisAlignment:
+                  CrossAxisAlignment.start,
+
+                  children: [
+                    Text(
+                      exercise["name"].toString(),
+
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w800,
+
+                        color: isCompleted
+                            ? Colors.black54
+                            : Colors.black,
+                      ),
+                    ),
+
+                    const SizedBox(height: 7),
+
+                    Text(
+                      isCompleted
+                          ? "Completed"
+                          : isCurrent
+                          ? "Current Exercise"
+                          : exercise["value"].toString(),
+
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: isCompleted || isCurrent
+                            ? FontWeight.w700
+                            : FontWeight.w500,
+
+                        color: isCompleted
+                            ? Colors.green
+                            : isCurrent
+                            ? TColor.primary
+                            : TColor.sceondarText,
+                      ),
+                    ),
+
+                    if (isCompleted) ...[
+                      const SizedBox(height: 4),
+
+                      Text(
+                        exercise["value"].toString(),
+
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: TColor.sceondarText,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+
+              Icon(
+                isCompleted
+                    ? Icons.check_circle_outline
+                    : Icons.arrow_forward_ios,
+
+                size: isCompleted ? 23 : 17,
+
+                color: isCompleted
+                    ? Colors.green
+                    : isCurrent
+                    ? TColor.primary
+                    : Colors.grey,
+              ),
+            ],
+          ),
         ),
       ),
     );

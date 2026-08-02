@@ -5,37 +5,55 @@ class WorkoutProgress {
   final bool completed;
   final int currentExerciseIndex;
   final int totalExercises;
+  final String? completedDate;
+  final String? completedTime;
 
   const WorkoutProgress({
     required this.started,
     required this.completed,
     required this.currentExerciseIndex,
     required this.totalExercises,
+    this.completedDate,
+    this.completedTime,
   });
 
   double get progress {
     if (completed) return 1.0;
-    if (totalExercises <= 0) return 0.0;
+
+    if (!started || totalExercises <= 0) {
+      return 0.0;
+    }
 
     return (currentExerciseIndex / totalExercises)
         .clamp(0.0, 1.0);
   }
 
   String get buttonText {
-    if (completed) return "REPEAT";
-    if (started) return "CONTINUE";
+    if (completed) {
+      return "REPEAT";
+    }
+
+    if (started) {
+      return "CONTINUE";
+    }
+
     return "START";
   }
 
   String get progressText {
-    if (completed) return "Completed";
+    if (completed) {
+      return "Workout completed";
+    }
 
-    if (!started) {
+    if (!started || totalExercises <= 0) {
       return "Not started";
     }
 
     final int visibleExercise =
-    (currentExerciseIndex + 1).clamp(1, totalExercises);
+    (currentExerciseIndex + 1).clamp(
+      1,
+      totalExercises,
+    );
 
     return "Exercise $visibleExercise of $totalExercises";
   }
@@ -59,15 +77,28 @@ class WorkoutProgressService {
   static String _totalExercisesKey(int day) =>
       "workout_day_${day}_total_exercises";
 
+  static String _completedDateKey(int day) =>
+      "workout_day_${day}_completed_date";
+
+  static String _completedTimeKey(int day) =>
+      "workout_day_${day}_completed_time";
+
+  static String _statsCountedKey(int day) =>
+      "workout_day_${day}_stats_counted";
+
   static Future<WorkoutProgress> getProgress(
       int dayNumber,
       ) async {
     final bool started =
-        await _prefs.getBool(_startedKey(dayNumber)) ??
+        await _prefs.getBool(
+          _startedKey(dayNumber),
+        ) ??
             false;
 
     final bool completed =
-        await _prefs.getBool(_completedKey(dayNumber)) ??
+        await _prefs.getBool(
+          _completedKey(dayNumber),
+        ) ??
             false;
 
     final int currentExerciseIndex =
@@ -82,11 +113,23 @@ class WorkoutProgressService {
         ) ??
             0;
 
+    final String? completedDate =
+    await _prefs.getString(
+      _completedDateKey(dayNumber),
+    );
+
+    final String? completedTime =
+    await _prefs.getString(
+      _completedTimeKey(dayNumber),
+    );
+
     return WorkoutProgress(
       started: started,
       completed: completed,
       currentExerciseIndex: currentExerciseIndex,
       totalExercises: totalExercises,
+      completedDate: completedDate,
+      completedTime: completedTime,
     );
   }
 
@@ -146,6 +189,17 @@ class WorkoutProgressService {
     required int dayNumber,
     required int totalExercises,
   }) async {
+    final DateTime now = DateTime.now();
+
+    final String completedDate =
+        "${now.year}-"
+        "${now.month.toString().padLeft(2, '0')}-"
+        "${now.day.toString().padLeft(2, '0')}";
+
+    final String completedTime =
+        "${now.hour.toString().padLeft(2, '0')}:"
+        "${now.minute.toString().padLeft(2, '0')}";
+
     await _prefs.setBool(
       _startedKey(dayNumber),
       true,
@@ -164,6 +218,34 @@ class WorkoutProgressService {
     await _prefs.setInt(
       _totalExercisesKey(dayNumber),
       totalExercises,
+    );
+
+    await _prefs.setString(
+      _completedDateKey(dayNumber),
+      completedDate,
+    );
+
+    await _prefs.setString(
+      _completedTimeKey(dayNumber),
+      completedTime,
+    );
+  }
+
+  static Future<bool> isStatsCounted(
+      int dayNumber,
+      ) async {
+    return await _prefs.getBool(
+      _statsCountedKey(dayNumber),
+    ) ??
+        false;
+  }
+
+  static Future<void> markStatsCounted(
+      int dayNumber,
+      ) async {
+    await _prefs.setBool(
+      _statsCountedKey(dayNumber),
+      true,
     );
   }
 
@@ -184,6 +266,18 @@ class WorkoutProgressService {
 
     await _prefs.remove(
       _totalExercisesKey(dayNumber),
+    );
+
+    await _prefs.remove(
+      _completedDateKey(dayNumber),
+    );
+
+    await _prefs.remove(
+      _completedTimeKey(dayNumber),
+    );
+
+    await _prefs.remove(
+      _statsCountedKey(dayNumber),
     );
   }
 }

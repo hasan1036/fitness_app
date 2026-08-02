@@ -2,7 +2,9 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_tts/flutter_tts.dart';
+import '../../data/workout_plan_data.dart' show workoutPlanData;
 import '../../service/workout_progress_service.dart';
+import '../../service/workout_stats_service.dart';
 
 import '../../common/color_extention.dart';
 
@@ -382,10 +384,33 @@ class _ExercisePlayerViewState extends State<ExercisePlayerView> {
   Future<void> _finishWorkout() async {
     _timer?.cancel();
 
+    final bool statsAlreadyCounted =
+    await WorkoutProgressService.isStatsCounted(
+      widget.dayNumber,
+    );
+
     await WorkoutProgressService.completeWorkout(
       dayNumber: widget.dayNumber,
       totalExercises: widget.exercises.length,
     );
+
+    if (!statsAlreadyCounted) {
+      final double calorie = double.tryParse(
+        workoutPlanData[widget.dayNumber - 1]["calorie"]
+            .toString()
+            .replaceAll("kcal", "")
+            .trim(),
+      ) ??
+          0.0;
+
+      await WorkoutStatsService.addWorkout(
+        calorie: calorie,
+      );
+
+      await WorkoutProgressService.markStatsCounted(
+        widget.dayNumber,
+      );
+    }
 
     if (!mounted) return;
 
@@ -397,7 +422,9 @@ class _ExercisePlayerViewState extends State<ExercisePlayerView> {
       isPaused = false;
     });
 
-    _speak("Congratulations. Workout complete.");
+    await _speak(
+      "Congratulations. Workout complete.",
+    );
   }
 
   String _formatTime(int seconds) {
