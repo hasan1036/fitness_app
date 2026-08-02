@@ -2,117 +2,403 @@ import 'package:flutter/material.dart';
 
 import '../common/color_extention.dart';
 import '../service/workout_progress_service.dart';
-import '../service/workout_stats_service.dart';
 
-import 'achievement_view.dart';
-import 'calendar_view.dart';
-import 'workout_history_view.dart';
-
-class ReportsView extends StatefulWidget {
-  const ReportsView({super.key});
+class WorkoutCalendarView extends StatefulWidget {
+  const WorkoutCalendarView({super.key});
 
   @override
-  State<ReportsView> createState() => _ReportsViewState();
+  State<WorkoutCalendarView> createState() =>
+      _WorkoutCalendarViewState();
 }
 
-class _ReportsViewState extends State<ReportsView> {
-  int completedDays = 0;
-  int totalWorkouts = 0;
-  double totalCalories = 0;
-  int currentStreak = 0;
-
-  List<bool> weeklyCompleted =
-  List<bool>.filled(7, false);
+class _WorkoutCalendarViewState
+    extends State<WorkoutCalendarView> {
+  DateTime selectedMonth = DateTime(
+    DateTime.now().year,
+    DateTime.now().month,
+  );
 
   bool isLoading = true;
+
+  final Map<String, List<Map<String, dynamic>>>
+  completedWorkoutMap = {};
+
+  static const List<String> monthNames = [
+    "January",
+    "February",
+    "March",
+    "April",
+    "May",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December",
+  ];
+
+  static const List<String> weekDays = [
+    "Mon",
+    "Tue",
+    "Wed",
+    "Thu",
+    "Fri",
+    "Sat",
+    "Sun",
+  ];
 
   @override
   void initState() {
     super.initState();
-    _loadReportData();
+    _loadCompletedWorkouts();
   }
 
-  Future<void> _loadReportData() async {
-    final int workouts =
-    await WorkoutStatsService.getWorkout();
-
-    final double calories =
-    await WorkoutStatsService.getCalories();
-
-    final int streak =
-    await WorkoutStatsService.getStreak();
-
-    int count = 0;
-
-    final List<bool> currentWeek =
-    List<bool>.filled(7, false);
-
-    final DateTime now = DateTime.now();
-
-    final DateTime startOfWeek = DateTime(
-      now.year,
-      now.month,
-      now.day,
-    ).subtract(
-      Duration(days: now.weekday - 1),
-    );
-
-    final DateTime endOfWeek =
-    startOfWeek.add(const Duration(days: 7));
+  Future<void> _loadCompletedWorkouts() async {
+    final Map<String, List<Map<String, dynamic>>> result = {};
 
     for (int day = 1; day <= 30; day++) {
       final WorkoutProgress progress =
       await WorkoutProgressService.getProgress(day);
 
-      if (!progress.completed) {
+      if (!progress.completed ||
+          progress.completedDate == null) {
         continue;
       }
 
-      count++;
+      final String dateKey = progress.completedDate!;
 
-      final String? savedDate =
-          progress.completedDate;
-
-      if (savedDate == null) {
-        continue;
-      }
-
-      final DateTime? parsedDate =
-      DateTime.tryParse(savedDate);
-
-      if (parsedDate == null) {
-        continue;
-      }
-
-      final DateTime completedDay = DateTime(
-        parsedDate.year,
-        parsedDate.month,
-        parsedDate.day,
+      result.putIfAbsent(
+        dateKey,
+            () => [],
       );
 
-      final bool isInsideCurrentWeek =
-          !completedDay.isBefore(startOfWeek) &&
-              completedDay.isBefore(endOfWeek);
-
-      if (isInsideCurrentWeek) {
-        currentWeek[completedDay.weekday - 1] = true;
-      }
+      result[dateKey]!.add({
+        "dayNumber": day,
+        "completedTime": progress.completedTime ?? "",
+        "totalExercises": progress.totalExercises,
+      });
     }
 
     if (!mounted) return;
 
     setState(() {
-      totalWorkouts = workouts;
-      totalCalories = calories;
-      currentStreak = streak;
-      completedDays = count;
-      weeklyCompleted = currentWeek;
+      completedWorkoutMap
+        ..clear()
+        ..addAll(result);
+
       isLoading = false;
     });
   }
 
+  String _dateKey(DateTime date) {
+    return "${date.year}-"
+        "${date.month.toString().padLeft(2, '0')}-"
+        "${date.day.toString().padLeft(2, '0')}";
+  }
+
+  bool _isToday(DateTime date) {
+    final DateTime now = DateTime.now();
+
+    return date.year == now.year &&
+        date.month == now.month &&
+        date.day == now.day;
+  }
+
+  void _previousMonth() {
+    setState(() {
+      selectedMonth = DateTime(
+        selectedMonth.year,
+        selectedMonth.month - 1,
+      );
+    });
+  }
+
+  void _nextMonth() {
+    setState(() {
+      selectedMonth = DateTime(
+        selectedMonth.year,
+        selectedMonth.month + 1,
+      );
+    });
+  }
+
+  String _formatTime(String savedTime) {
+    if (savedTime.isEmpty ||
+        !savedTime.contains(":")) {
+      return "Time unavailable";
+    }
+
+    final List<String> parts = savedTime.split(":");
+
+    int hour = int.tryParse(parts[0]) ?? 0;
+    final int minute =
+        int.tryParse(parts[1]) ?? 0;
+
+    final String period =
+    hour >= 12 ? "PM" : "AM";
+
+    hour = hour % 12;
+
+    if (hour == 0) {
+      hour = 12;
+    }
+
+    return "$hour:"
+        "${minute.toString().padLeft(2, '0')} "
+        "$period";
+  }
+
+  String _formatFullDate(DateTime date) {
+    return "${monthNames[date.month - 1]} "
+        "${date.day}, ${date.year}";
+  }
+
+  List<DateTime?> _buildCalendarDays() {
+    final int totalDays =
+    DateUtils.getDaysInMonth(
+      selectedMonth.year,
+      selectedMonth.month,
+    );
+
+    final DateTime firstDay = DateTime(
+      selectedMonth.year,
+      selectedMonth.month,
+      1,
+    );
+
+    final int leadingEmptyDays =
+        firstDay.weekday - 1;
+
+    final List<DateTime?> calendarDays = [];
+
+    for (int i = 0; i < leadingEmptyDays; i++) {
+      calendarDays.add(null);
+    }
+
+    for (int day = 1; day <= totalDays; day++) {
+      calendarDays.add(
+        DateTime(
+          selectedMonth.year,
+          selectedMonth.month,
+          day,
+        ),
+      );
+    }
+
+    while (calendarDays.length % 7 != 0) {
+      calendarDays.add(null);
+    }
+
+    return calendarDays;
+  }
+
+  void _showDateDetails(DateTime date) {
+    final String key = _dateKey(date);
+
+    final List<Map<String, dynamic>> workouts =
+        completedWorkoutMap[key] ?? [];
+
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (bottomSheetContext) {
+        return Container(
+          padding: const EdgeInsets.fromLTRB(
+            20,
+            18,
+            20,
+            30,
+          ),
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(
+              top: Radius.circular(28),
+            ),
+          ),
+          child: SafeArea(
+            top: false,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment:
+              CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Container(
+                    width: 45,
+                    height: 5,
+                    decoration: BoxDecoration(
+                      color: Colors.black12,
+                      borderRadius:
+                      BorderRadius.circular(20),
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 20),
+
+                Text(
+                  _formatFullDate(date),
+                  style: const TextStyle(
+                    fontSize: 23,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+
+                const SizedBox(height: 18),
+
+                if (workouts.isEmpty)
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(22),
+                    decoration: BoxDecoration(
+                      color: const Color(0xffF7F3FD),
+                      borderRadius:
+                      BorderRadius.circular(20),
+                    ),
+                    child: Column(
+                      children: [
+                        Icon(
+                          Icons.event_available_outlined,
+                          color: TColor.primary,
+                          size: 48,
+                        ),
+
+                        const SizedBox(height: 12),
+
+                        const Text(
+                          "No Workout Completed",
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+
+                        const SizedBox(height: 6),
+
+                        Text(
+                          "No completed workout was found for this date.",
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: TColor.sceondarText,
+                            fontSize: 13,
+                          ),
+                        ),
+                      ],
+                    ),
+                  )
+                else
+                  ...workouts.map(
+                        (workout) => Container(
+                      margin: const EdgeInsets.only(
+                        bottom: 12,
+                      ),
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: const Color(0xffF7F3FD),
+                        borderRadius:
+                        BorderRadius.circular(20),
+                      ),
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 52,
+                            height: 52,
+                            decoration: BoxDecoration(
+                              color: TColor.primaryLight,
+                              borderRadius:
+                              BorderRadius.circular(16),
+                            ),
+                            child: Icon(
+                              Icons.fitness_center_rounded,
+                              color: TColor.primary,
+                              size: 26,
+                            ),
+                          ),
+
+                          const SizedBox(width: 14),
+
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment:
+                              CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  "Day ${workout["dayNumber"]}",
+                                  style: const TextStyle(
+                                    fontSize: 18,
+                                    fontWeight:
+                                    FontWeight.w800,
+                                  ),
+                                ),
+
+                                const SizedBox(height: 5),
+
+                                Text(
+                                  _formatTime(
+                                    workout["completedTime"]
+                                        .toString(),
+                                  ),
+                                  style: TextStyle(
+                                    color:
+                                    TColor.sceondarText,
+                                    fontSize: 13,
+                                  ),
+                                ),
+
+                                const SizedBox(height: 3),
+
+                                Text(
+                                  "${workout["totalExercises"]} exercises",
+                                  style: TextStyle(
+                                    color:
+                                    TColor.sceondarText,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+
+                          Container(
+                            padding:
+                            const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 6,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.green
+                                  .withOpacity(0.12),
+                              borderRadius:
+                              BorderRadius.circular(20),
+                            ),
+                            child: const Text(
+                              "Completed",
+                              style: TextStyle(
+                                color: Colors.green,
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final List<DateTime?> calendarDays =
+    _buildCalendarDays();
+
     return Scaffold(
       backgroundColor: const Color(0xffF7F3FD),
 
@@ -131,424 +417,261 @@ class _ReportsViewState extends State<ReportsView> {
         ),
 
         title: const Text(
-          "Reports",
+          "Workout Calendar",
           style: TextStyle(
             color: Colors.black,
             fontSize: 22,
             fontWeight: FontWeight.w800,
           ),
         ),
-
-        actions: [
-          IconButton(
-            onPressed: _loadReportData,
-            icon: Icon(
-              Icons.refresh_rounded,
-              color: TColor.primary,
-            ),
-          ),
-        ],
       ),
 
-      body: RefreshIndicator(
+      body: isLoading
+          ? Center(
+        child: CircularProgressIndicator(
+          color: TColor.primary,
+        ),
+      )
+          : RefreshIndicator(
         color: TColor.primary,
-        onRefresh: _loadReportData,
-
-        child: SingleChildScrollView(
-          physics: const AlwaysScrollableScrollPhysics(),
-
+        onRefresh: _loadCompletedWorkouts,
+        child: ListView(
+          physics:
+          const AlwaysScrollableScrollPhysics(),
           padding: const EdgeInsets.fromLTRB(
             20,
             10,
             20,
             30,
           ),
-
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-
-            children: [
-              Text(
-                "Workout Summary",
-                style: TextStyle(
-                  color: TColor.primaryText,
-                  fontSize: 24,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-
-              const SizedBox(height: 18),
-
-              Row(
-                children: [
-                  Expanded(
-                    child: _summaryCard(
-                      icon: Icons.fitness_center_rounded,
-                      title: "Workouts",
-                      value: isLoading
-                          ? "..."
-                          : totalWorkouts.toString(),
-                    ),
-                  ),
-
-                  const SizedBox(width: 12),
-
-                  Expanded(
-                    child: _summaryCard(
-                      icon: Icons.local_fire_department_rounded,
-                      title: "Calories",
-                      value: isLoading
-                          ? "..."
-                          : "${totalCalories.toStringAsFixed(0)} kcal",
-                    ),
+          children: [
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius:
+                BorderRadius.circular(24),
+                boxShadow: const [
+                  BoxShadow(
+                    color: Color(0x10000000),
+                    blurRadius: 15,
+                    offset: Offset(0, 5),
                   ),
                 ],
               ),
-
-              const SizedBox(height: 12),
-
-              Row(
+              child: Column(
                 children: [
-                  Expanded(
-                    child: _summaryCard(
-                      icon: Icons.bolt_rounded,
-                      title: "Streak",
-                      value: isLoading
-                          ? "..."
-                          : "$currentStreak Days",
-                    ),
-                  ),
-
-                  const SizedBox(width: 12),
-
-                  Expanded(
-                    child: _summaryCard(
-                      icon: Icons.check_circle_rounded,
-                      title: "Completed",
-                      value: isLoading
-                          ? "..."
-                          : "$completedDays / 30",
-                    ),
-                  ),
-                ],
-              ),
-
-              const SizedBox(height: 28),
-
-              Text(
-                "Weekly Progress",
-                style: TextStyle(
-                  color: TColor.primaryText,
-                  fontSize: 21,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-
-              const SizedBox(height: 14),
-
-              _weeklyProgressCard(),
-
-              const SizedBox(height: 28),
-
-              Text(
-                "More Reports",
-                style: TextStyle(
-                  color: TColor.primaryText,
-                  fontSize: 21,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-
-              const SizedBox(height: 14),
-
-              _reportTile(
-                icon: Icons.calendar_month_rounded,
-                title: "Workout Calendar",
-                subtitle: "See your completed workout days",
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) =>
-                      const WorkoutCalendarView(),
-                    ),
-                  );
-                },
-              ),
-
-              _reportTile(
-                icon: Icons.monitor_weight_rounded,
-                title: "Weight Progress",
-                subtitle: "Track your weight changes",
-                onTap: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text(
-                        "Weight Progress screen coming next",
+                  Row(
+                    children: [
+                      IconButton(
+                        onPressed: _previousMonth,
+                        icon: Icon(
+                          Icons
+                              .arrow_back_ios_new_rounded,
+                          color: TColor.primary,
+                          size: 19,
+                        ),
                       ),
-                    ),
-                  );
-                },
-              ),
 
-              _reportTile(
-                icon: Icons.history_rounded,
-                title: "Workout History",
-                subtitle: "View your previous workouts",
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) =>
-                      const WorkoutHistoryView(),
-                    ),
-                  );
-                },
-              ),
+                      Expanded(
+                        child: Text(
+                          "${monthNames[selectedMonth.month - 1]} "
+                              "${selectedMonth.year}",
+                          textAlign:
+                          TextAlign.center,
+                          style: TextStyle(
+                            color: TColor.primaryText,
+                            fontSize: 21,
+                            fontWeight:
+                            FontWeight.w900,
+                          ),
+                        ),
+                      ),
 
-              _reportTile(
-                icon: Icons.emoji_events_rounded,
-                title: "Achievements",
-                subtitle: "See your badges and milestones",
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) =>
-                      const AchievementView(),
+                      IconButton(
+                        onPressed: _nextMonth,
+                        icon: Icon(
+                          Icons
+                              .arrow_forward_ios_rounded,
+                          color: TColor.primary,
+                          size: 19,
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 18),
+
+                  Row(
+                    children: weekDays
+                        .map(
+                          (day) => Expanded(
+                        child: Text(
+                          day,
+                          textAlign:
+                          TextAlign.center,
+                          style: TextStyle(
+                            color:
+                            TColor.sceondarText,
+                            fontSize: 12,
+                            fontWeight:
+                            FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                    )
+                        .toList(),
+                  ),
+
+                  const SizedBox(height: 10),
+
+                  GridView.builder(
+                    shrinkWrap: true,
+                    physics:
+                    const NeverScrollableScrollPhysics(),
+                    itemCount: calendarDays.length,
+                    gridDelegate:
+                    const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 7,
+                      crossAxisSpacing: 5,
+                      mainAxisSpacing: 8,
+                      childAspectRatio: 1,
                     ),
-                  );
-                },
+                    itemBuilder: (context, index) {
+                      final DateTime? date =
+                      calendarDays[index];
+
+                      if (date == null) {
+                        return const SizedBox();
+                      }
+
+                      final String key =
+                      _dateKey(date);
+
+                      final bool completed =
+                      completedWorkoutMap
+                          .containsKey(key);
+
+                      final bool today =
+                      _isToday(date);
+
+                      return InkWell(
+                        borderRadius:
+                        BorderRadius.circular(30),
+                        onTap: () {
+                          _showDateDetails(date);
+                        },
+                        child: AnimatedContainer(
+                          duration: const Duration(
+                            milliseconds: 220,
+                          ),
+                          decoration: BoxDecoration(
+                            color: completed
+                                ? TColor.primary
+                                : Colors.transparent,
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              width: today ? 2 : 1,
+                              color: today
+                                  ? Colors.green
+                                  : completed
+                                  ? TColor.primary
+                                  : Colors.transparent,
+                            ),
+                          ),
+                          alignment: Alignment.center,
+                          child: Text(
+                            date.day.toString(),
+                            style: TextStyle(
+                              color: completed
+                                  ? Colors.white
+                                  : today
+                                  ? Colors.green
+                                  : TColor.primaryText,
+                              fontSize: 14,
+                              fontWeight:
+                              completed || today
+                                  ? FontWeight.w800
+                                  : FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ],
               ),
-            ],
-          ),
+            ),
+
+            const SizedBox(height: 22),
+
+            Container(
+              padding: const EdgeInsets.all(18),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius:
+                BorderRadius.circular(20),
+              ),
+              child: Row(
+                mainAxisAlignment:
+                MainAxisAlignment.spaceAround,
+                children: [
+                  _legendItem(
+                    color: TColor.primary,
+                    label: "Completed",
+                  ),
+                  _legendItem(
+                    color: Colors.green,
+                    label: "Today",
+                    outlined: true,
+                  ),
+                  _legendItem(
+                    color: Colors.grey.shade300,
+                    label: "No Workout",
+                    outlined: true,
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
       ),
     );
   }
 
-  Widget _weeklyProgressCard() {
-    const List<String> weekDays = [
-      "Mon",
-      "Tue",
-      "Wed",
-      "Thu",
-      "Fri",
-      "Sat",
-      "Sun",
-    ];
-
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(20),
-
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(22),
-
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x10000000),
-            blurRadius: 14,
-            offset: Offset(0, 5),
-          ),
-        ],
-      ),
-
-      child: Column(
-        children: [
-          Row(
-            children: List.generate(
-              7,
-                  (index) {
-                return Expanded(
-                  child: Text(
-                    weekDays[index],
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: TColor.sceondarText,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                );
-              },
-            ),
-          ),
-
-          const SizedBox(height: 15),
-
-          Row(
-            children: List.generate(
-              7,
-                  (index) {
-                final bool completed =
-                weeklyCompleted[index];
-
-                return Expanded(
-                  child: Center(
-                    child: AnimatedContainer(
-                      duration: const Duration(
-                        milliseconds: 250,
-                      ),
-                      width: 30,
-                      height: 30,
-
-                      decoration: BoxDecoration(
-                        color: completed
-                            ? TColor.primary
-                            : TColor.primaryLight,
-                        shape: BoxShape.circle,
-                      ),
-
-                      child: Icon(
-                        completed
-                            ? Icons.check_rounded
-                            : Icons.remove_rounded,
-                        color: completed
-                            ? Colors.white
-                            : TColor.primary,
-                        size: 18,
-                      ),
-                    ),
-                  ),
-                );
-              },
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _summaryCard({
-    required IconData icon,
-    required String title,
-    required String value,
+  Widget _legendItem({
+    required Color color,
+    required String label,
+    bool outlined = false,
   }) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x10000000),
-            blurRadius: 12,
-            offset: Offset(0, 4),
-          ),
-        ],
-      ),
-
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-
-        children: [
-          Container(
-            width: 42,
-            height: 42,
-
-            decoration: BoxDecoration(
-              color: TColor.primaryLight,
-              borderRadius: BorderRadius.circular(13),
-            ),
-
-            child: Icon(
-              icon,
-              color: TColor.primary,
-            ),
-          ),
-
-          const SizedBox(height: 14),
-
-          Text(
-            value,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-
-            style: TextStyle(
-              color: TColor.primaryText,
-              fontSize: 22,
-              fontWeight: FontWeight.w900,
-            ),
-          ),
-
-          const SizedBox(height: 4),
-
-          Text(
-            title,
-            style: TextStyle(
-              color: TColor.sceondarText,
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _reportTile({
-    required IconData icon,
-    required String title,
-    required String subtitle,
-    VoidCallback? onTap,
-  }) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-      ),
-
-      child: ListTile(
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: 16,
-          vertical: 6,
-        ),
-
-        leading: Container(
-          width: 46,
-          height: 46,
-
+    return Row(
+      children: [
+        Container(
+          width: 14,
+          height: 14,
           decoration: BoxDecoration(
-            color: TColor.primaryLight,
-            borderRadius: BorderRadius.circular(14),
-          ),
-
-          child: Icon(
-            icon,
-            color: TColor.primary,
-          ),
-        ),
-
-        title: Text(
-          title,
-          style: const TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w800,
+            color: outlined
+                ? Colors.transparent
+                : color,
+            shape: BoxShape.circle,
+            border: Border.all(
+              color: color,
+              width: 2,
+            ),
           ),
         ),
 
-        subtitle: Text(
-          subtitle,
+        const SizedBox(width: 6),
+
+        Text(
+          label,
           style: TextStyle(
             color: TColor.sceondarText,
-            fontSize: 12,
+            fontSize: 11,
+            fontWeight: FontWeight.w600,
           ),
         ),
-
-        trailing: Icon(
-          Icons.arrow_forward_ios_rounded,
-          color: TColor.primary,
-          size: 17,
-        ),
-
-        onTap: onTap,
-      ),
+      ],
     );
   }
 }

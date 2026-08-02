@@ -5,6 +5,9 @@ import '../service/workout_progress_service.dart';
 import '../service/workout_stats_service.dart';
 import 'achievement_view.dart';
 import 'workout_history_view.dart';
+import 'achievement_view.dart';
+import 'workout_history_view.dart';
+import 'calendar_view.dart';
 
 class ReportsView extends StatefulWidget {
   const ReportsView({super.key});
