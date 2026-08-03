@@ -2,8 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:workoutfitnesstool/common/color_extention.dart';
 //import 'package:workoutfitnesstool/view/login/on_boarding_view.dart';
 import 'package:workoutfitnesstool/view/menu/menu_view.dart';
+import 'package:workoutfitnesstool/service/notification_service.dart';
 
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await NotificationService.initialize();
   runApp(const MyApp());
 }
 

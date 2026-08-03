@@ -5,6 +5,7 @@ import '../service/workout_progress_service.dart';
 import '../service/workout_stats_service.dart';
 import 'achievement_view.dart';
 import 'workout_history_view.dart';
+import 'weight_progress_view.dart';
 import 'achievement_view.dart';
 import 'workout_history_view.dart';
 import 'calendar_view.dart';
@@ -328,12 +329,28 @@ class _ReportsViewState extends State<ReportsView> {
                 icon: Icons.calendar_month_rounded,
                 title: "Workout Calendar",
                 subtitle: "See your completed workout days",
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const WorkoutCalendarView(),
+                    ),
+                  );
+                },
               ),
 
               _reportTile(
                 icon: Icons.monitor_weight_rounded,
                 title: "Weight Progress",
                 subtitle: "Track your weight changes",
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const WeightProgressView(),
+                    ),
+                  );
+                },
               ),
 
               _reportTile(

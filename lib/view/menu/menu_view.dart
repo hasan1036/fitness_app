@@ -610,7 +610,7 @@ class _MenuViewState extends State<MenuView> {
   Widget _buildHeader() {
     return Container(
       width: double.infinity,
-      height: 300,
+      height: 305,
 
       decoration: BoxDecoration(
         color: TColor.primary,
@@ -828,7 +828,7 @@ class _MenuViewState extends State<MenuView> {
                     ),
                   ),
 
-                  const SizedBox(width: 10),
+                  const SizedBox(width: 7),
 
                   Expanded(
                     child: _buildStatCard(
