@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import '../../common/color_extention.dart';
 import '../reminder/workout_reminder_view.dart';
 import '../reminder/water_reminder_view.dart';
+import '../reminder/meal_reminder_view.dart';
+import '../reminder/sleep_reminder_view.dart';
 
 class ScheduleView extends StatelessWidget {
   const ScheduleView({super.key});
@@ -95,8 +97,16 @@ class ScheduleView extends StatelessWidget {
             context: context,
             icon: Icons.restaurant_rounded,
             title: "Meal Reminder",
-            subtitle: "Schedule breakfast, lunch and dinner",
-            enabled: false,
+            subtitle: "Schedule breakfast, snack, lunch and dinner",
+            enabled: true,
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const MealReminderView(),
+                ),
+              );
+            },
           ),
 
           _reminderCard(
@@ -104,7 +114,15 @@ class ScheduleView extends StatelessWidget {
             icon: Icons.bedtime_rounded,
             title: "Sleep Reminder",
             subtitle: "Maintain a healthy sleeping routine",
-            enabled: false,
+            enabled: true,
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const SleepReminderView(),
+                ),
+              );
+            },
           ),
 
           const SizedBox(height: 14),

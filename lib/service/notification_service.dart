@@ -12,6 +12,8 @@ class NotificationService {
 
   static const int _workoutNotificationBaseId = 100;
   static const int _waterNotificationBaseId = 3000;
+  static const int _mealNotificationBaseId = 5000;
+  static const int _sleepNotificationBaseId = 7000;
 
   static Future<void> initialize() async {
     tz.initializeTimeZones();
@@ -313,6 +315,251 @@ class NotificationService {
         id++) {
       await flutterLocalNotificationsPlugin.cancel(
         id: id,
+      );
+    }
+  }
+
+
+
+  static const NotificationDetails _mealNotificationDetails =
+      NotificationDetails(
+    android: AndroidNotificationDetails(
+      'meal_reminder_channel_v1',
+      'Meal Reminders',
+      channelDescription:
+          'Notifications for breakfast, snack, lunch and dinner',
+      importance: Importance.max,
+      priority: Priority.high,
+      playSound: true,
+      enableVibration: true,
+      icon: 'ic_notification',
+    ),
+    iOS: DarwinNotificationDetails(
+      presentAlert: true,
+      presentBadge: true,
+      presentSound: true,
+    ),
+  );
+
+  static Future<void> scheduleMealReminders({
+    required int breakfastHour,
+    required int breakfastMinute,
+    required int snackHour,
+    required int snackMinute,
+    required int lunchHour,
+    required int lunchMinute,
+    required int dinnerHour,
+    required int dinnerMinute,
+    required List<int> selectedDayIndexes,
+  }) async {
+    await cancelMealReminders();
+
+    final bool permissionGranted =
+        await requestPermissions();
+
+    if (!permissionGranted) {
+      throw Exception(
+        'Notification permission was not allowed',
+      );
+    }
+
+    if (selectedDayIndexes.isEmpty) {
+      throw Exception(
+        'Select at least one reminder day',
+      );
+    }
+
+    final List<Map<String, dynamic>> meals = [
+      {
+        'title': 'Breakfast Time',
+        'body': 'Start your day with a healthy breakfast.',
+        'hour': breakfastHour,
+        'minute': breakfastMinute,
+        'offset': 0,
+      },
+      {
+        'title': 'Healthy Snack Time',
+        'body': 'Choose a light and healthy snack.',
+        'hour': snackHour,
+        'minute': snackMinute,
+        'offset': 1,
+      },
+      {
+        'title': 'Lunch Time',
+        'body': 'Time for a balanced and nutritious lunch.',
+        'hour': lunchHour,
+        'minute': lunchMinute,
+        'offset': 2,
+      },
+      {
+        'title': 'Dinner Time',
+        'body': 'Enjoy a light and healthy dinner.',
+        'hour': dinnerHour,
+        'minute': dinnerMinute,
+        'offset': 3,
+      },
+    ];
+
+    for (final int dayIndex in selectedDayIndexes) {
+      if (dayIndex < 0 || dayIndex > 6) {
+        continue;
+      }
+
+      final int weekday = dayIndex + 1;
+
+      for (final Map<String, dynamic> meal in meals) {
+        final tz.TZDateTime scheduledDate =
+            _nextWeekdayTime(
+          weekday: weekday,
+          hour: meal['hour'] as int,
+          minute: meal['minute'] as int,
+        );
+
+        await flutterLocalNotificationsPlugin.zonedSchedule(
+          id: _mealNotificationBaseId +
+              (dayIndex * 10) +
+              (meal['offset'] as int),
+          title: meal['title'] as String,
+          body: meal['body'] as String,
+          scheduledDate: scheduledDate,
+          notificationDetails: _mealNotificationDetails,
+          androidScheduleMode:
+              AndroidScheduleMode.inexactAllowWhileIdle,
+          matchDateTimeComponents:
+              DateTimeComponents.dayOfWeekAndTime,
+          payload: 'meal_reminder',
+        );
+      }
+    }
+  }
+
+  static Future<void> cancelMealReminders() async {
+    for (int dayIndex = 0; dayIndex < 7; dayIndex++) {
+      for (int mealIndex = 0; mealIndex < 4; mealIndex++) {
+        await flutterLocalNotificationsPlugin.cancel(
+          id: _mealNotificationBaseId +
+              (dayIndex * 10) +
+              mealIndex,
+        );
+      }
+    }
+  }
+
+
+
+  static const NotificationDetails _sleepNotificationDetails =
+      NotificationDetails(
+    android: AndroidNotificationDetails(
+      'sleep_reminder_channel_v1',
+      'Sleep Reminders',
+      channelDescription:
+          'Bedtime and wake-up reminder notifications',
+      importance: Importance.max,
+      priority: Priority.high,
+      playSound: true,
+      enableVibration: true,
+      icon: 'ic_notification',
+    ),
+    iOS: DarwinNotificationDetails(
+      presentAlert: true,
+      presentBadge: true,
+      presentSound: true,
+    ),
+  );
+
+  static Future<void> scheduleSleepReminders({
+    required int bedHour,
+    required int bedMinute,
+    required int wakeHour,
+    required int wakeMinute,
+    required List<int> selectedDayIndexes,
+  }) async {
+    await cancelSleepReminders();
+
+    final bool permissionGranted =
+        await requestPermissions();
+
+    if (!permissionGranted) {
+      throw Exception(
+        'Notification permission was not allowed',
+      );
+    }
+
+    if (selectedDayIndexes.isEmpty) {
+      throw Exception(
+        'Select at least one reminder day',
+      );
+    }
+
+    for (final int dayIndex in selectedDayIndexes) {
+      if (dayIndex < 0 || dayIndex > 6) {
+        continue;
+      }
+
+      final int weekday = dayIndex + 1;
+
+      final tz.TZDateTime bedDate =
+          _nextWeekdayTime(
+        weekday: weekday,
+        hour: bedHour,
+        minute: bedMinute,
+      );
+
+      final tz.TZDateTime wakeDate =
+          _nextWeekdayTime(
+        weekday: weekday,
+        hour: wakeHour,
+        minute: wakeMinute,
+      );
+
+      await flutterLocalNotificationsPlugin.zonedSchedule(
+        id: _sleepNotificationBaseId +
+            (dayIndex * 10),
+        title: 'Time to Sleep',
+        body:
+            'Wind down and get enough rest for tomorrow.',
+        scheduledDate: bedDate,
+        notificationDetails:
+            _sleepNotificationDetails,
+        androidScheduleMode:
+            AndroidScheduleMode.inexactAllowWhileIdle,
+        matchDateTimeComponents:
+            DateTimeComponents.dayOfWeekAndTime,
+        payload: 'sleep_bedtime_reminder',
+      );
+
+      await flutterLocalNotificationsPlugin.zonedSchedule(
+        id: _sleepNotificationBaseId +
+            (dayIndex * 10) +
+            1,
+        title: 'Good Morning',
+        body:
+            'Wake up refreshed and start your healthy day.',
+        scheduledDate: wakeDate,
+        notificationDetails:
+            _sleepNotificationDetails,
+        androidScheduleMode:
+            AndroidScheduleMode.inexactAllowWhileIdle,
+        matchDateTimeComponents:
+            DateTimeComponents.dayOfWeekAndTime,
+        payload: 'sleep_wakeup_reminder',
+      );
+    }
+  }
+
+  static Future<void> cancelSleepReminders() async {
+    for (int dayIndex = 0;
+        dayIndex < 7;
+        dayIndex++) {
+      await flutterLocalNotificationsPlugin.cancel(
+        id: _sleepNotificationBaseId +
+            (dayIndex * 10),
+      );
+
+      await flutterLocalNotificationsPlugin.cancel(
+        id: _sleepNotificationBaseId +
+            (dayIndex * 10) +
+            1,
       );
     }
   }

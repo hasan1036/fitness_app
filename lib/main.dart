@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
+
 import 'package:workoutfitnesstool/common/color_extention.dart';
 import 'package:workoutfitnesstool/service/notification_service.dart';
-import 'package:workoutfitnesstool/view/menu/menu_view.dart';
+import 'package:workoutfitnesstool/view/login/on_boarding_view.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -10,8 +11,9 @@ Future<void> main() async {
     await NotificationService.initialize();
   } catch (error, stackTrace) {
     debugPrint(
-      "Notification initialize error: $error",
+      'Notification initialize error: $error',
     );
+
     debugPrintStack(
       stackTrace: stackTrace,
     );
@@ -34,7 +36,7 @@ class MyApp extends StatelessWidget {
         ),
         useMaterial3: false,
       ),
-      home: const MenuView(),
+      home: const OnBoardingView(),
     );
   }
 }

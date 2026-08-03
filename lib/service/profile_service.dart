@@ -5,22 +5,42 @@ class ProfileService {
   static const String _imageKey = "profile_image_path";
 
   static Future<String> getName() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getString(_nameKey) ?? "Code For Any";
+    final SharedPreferences prefs =
+        await SharedPreferences.getInstance();
+
+    final String savedName =
+        prefs.getString(_nameKey)?.trim() ?? "";
+
+    if (savedName.isEmpty ||
+        savedName == "Code For Any" ||
+        savedName == "Code For Jannat") {
+      return "Name";
+    }
+
+    return savedName;
   }
 
   static Future<void> saveName(String name) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_nameKey, name);
+    final SharedPreferences prefs =
+        await SharedPreferences.getInstance();
+
+    final String cleanName = name.trim();
+
+    await prefs.setString(
+      _nameKey,
+      cleanName.isEmpty ? "Name" : cleanName,
+    );
   }
 
   static Future<String?> getImagePath() async {
-    final prefs = await SharedPreferences.getInstance();
+    final SharedPreferences prefs =
+        await SharedPreferences.getInstance();
     return prefs.getString(_imageKey);
   }
 
   static Future<void> saveImagePath(String path) async {
-    final prefs = await SharedPreferences.getInstance();
+    final SharedPreferences prefs =
+        await SharedPreferences.getInstance();
     await prefs.setString(_imageKey, path);
   }
 }

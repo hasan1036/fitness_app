@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../common/color_extention.dart';
-import '../schedule/schedule_view.dart';
+import '../reminder/meal_reminder_view.dart';
 
 class MealPlanView extends StatefulWidget {
   const MealPlanView({super.key});
@@ -461,7 +461,7 @@ class _MealPlanViewState extends State<MealPlanView> {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (_) => const ScheduleView(),
+                  builder: (_) => const MealReminderView(),
                 ),
               );
             },
@@ -1026,7 +1026,7 @@ class _MealPlanViewState extends State<MealPlanView> {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (_) => const ScheduleView(),
+            builder: (_) => const MealReminderView(),
           ),
         );
       },

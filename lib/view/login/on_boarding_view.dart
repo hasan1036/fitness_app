@@ -3,6 +3,7 @@ import 'package:workoutfitnesstool/common/color_extention.dart';
 import 'package:workoutfitnesstool/view/login/step1_view.dart';
 
 import '../../common_widget/round_button.dart';
+import '../menu/menu_view.dart';
 
 class OnBoardingView extends StatefulWidget {
   const OnBoardingView({super.key});
@@ -139,7 +140,7 @@ class _OnBoardingViewState extends State<OnBoardingView> {
                      padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 25),
                      child: RoundButton(title: 'Start',type: RoundButtonType.primaryText, onPressed: () {
                        
-                       Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (context) => const Step1View()), (route) => false,);
+                       Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (context) => const MenuView()), (route) => false,);
                        
                      },),
                    ),

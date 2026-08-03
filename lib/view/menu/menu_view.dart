@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:image_picker/image_picker.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../reports/reports_view.dart';
 import '../../service/profile_service.dart';
@@ -11,15 +12,15 @@ import '../../data/workout_day_view.dart';
 import '../../service/workout_progress_service.dart';
 import '../../service/workout_stats_service.dart';
 
-import '../exercise/exercise_view_2.dart';
 import '../home/home_view.dart';
-import '../meal_plan/mean_plan_view.dart';
-import '../running/running_view.dart';
+import '../profile/me_view.dart';
+import '../plan/plan_view.dart';
 import '../schedule/schedule_view.dart';
-import '../water/water_tracker_view.dart';
-import '../weight/weight_view.dart';
+import '../reminder/sleep_reminder_view.dart';
+import '../reminder/meal_reminder_view.dart';
+import '../reminder/water_reminder_view.dart';
+import '../reminder/workout_reminder_view.dart';
 import '../../common_widget/app_drawer.dart';
-import '../workout/workout_view.dart';
 
 
 
@@ -79,7 +80,7 @@ class _MenuViewState extends State<MenuView> {
   }
   final ImagePicker _imagePicker = ImagePicker();
 
-  String profileName = "Code For Jannat";
+  String profileName = "Name";
   String? profileImagePath;
   /// বর্তমানে কোন Day selected
   int selectedDay = 0;
@@ -88,52 +89,15 @@ class _MenuViewState extends State<MenuView> {
   double totalCalories = 0;
   int currentStreak = 0;
 
-  /// =====================================================
-  /// QUICK ACCESS
-  /// =====================================================
+  bool workoutReminderEnabled = false;
+  bool waterReminderEnabled = false;
+  bool mealReminderEnabled = false;
+  bool sleepReminderEnabled = false;
 
-  final List<Map<String, dynamic>> quickAccessList = [
-    {
-      "title": "Weight",
-      "icon": "assets/img/scale.png",
-      "type": "weight",
-    },
-    {
-      "title": "Training Plan",
-      "icon": "assets/img/clipboard.png",
-      "type": "training",
-    },
-    {
-      "title": "Meal Plan",
-      "icon": "assets/img/spoon.png",
-      "type": "meal",
-    },
-    {
-      "title": "Schedule",
-      "icon": "assets/img/calendar.png",
-      "type": "schedule",
-    },
-    {
-      "title": "Running",
-      "icon": "assets/img/run.png",
-      "type": "running",
-    },
-    {
-      "title": "Exercise",
-      "icon": "assets/img/work.png",
-      "type": "exercise",
-    },
-    {
-      "title": "Training Status",
-      "icon": "assets/img/signal.png",
-      "type": "status",
-    },
-    {
-      "title": "Water",
-      "icon": "assets/img/light.png",
-      "type": "water",
-    },
-  ];
+  String workoutReminderValue = "Not set";
+  String waterReminderValue = "Not set";
+  String mealReminderValue = "Not set";
+  String sleepReminderValue = "Not set";
 
   /// =====================================================
   /// 30 WORKOUT DAYS
@@ -163,6 +127,84 @@ class _MenuViewState extends State<MenuView> {
 
     _loadWorkoutStats();
     _loadProfile();
+    _loadReminderSummary();
+  }
+
+  Future<void> _loadReminderSummary() async {
+    final SharedPreferences prefs =
+    await SharedPreferences.getInstance();
+
+    final int workoutHour =
+        prefs.getInt('workout_reminder_hour') ?? 19;
+    final int workoutMinute =
+        prefs.getInt('workout_reminder_minute') ?? 0;
+
+    final int waterInterval =
+        prefs.getInt('water_reminder_interval') ?? 60;
+
+    final int breakfastHour =
+        prefs.getInt('meal_breakfast_hour') ?? 8;
+    final int breakfastMinute =
+        prefs.getInt('meal_breakfast_minute') ?? 0;
+
+    final int sleepHour =
+        prefs.getInt('sleep_reminder_bed_hour') ?? 22;
+    final int sleepMinute =
+        prefs.getInt('sleep_reminder_bed_minute') ?? 30;
+
+    if (!mounted) return;
+
+    setState(() {
+      workoutReminderEnabled =
+          prefs.getBool('workout_reminder_enabled') ?? false;
+      waterReminderEnabled =
+          prefs.getBool('water_reminder_enabled') ?? false;
+      mealReminderEnabled =
+          prefs.getBool('meal_reminder_enabled') ?? false;
+      sleepReminderEnabled =
+          prefs.getBool('sleep_reminder_enabled') ?? false;
+
+      workoutReminderValue = _formatTime(
+        workoutHour,
+        workoutMinute,
+      );
+
+      waterReminderValue = waterInterval >= 60
+          ? 'Every ${waterInterval ~/ 60}h'
+          : 'Every ${waterInterval}m';
+
+      mealReminderValue = _formatTime(
+        breakfastHour,
+        breakfastMinute,
+      );
+
+      sleepReminderValue = _formatTime(
+        sleepHour,
+        sleepMinute,
+      );
+    });
+  }
+
+  String _formatTime(int hour, int minute) {
+    final TimeOfDay time = TimeOfDay(
+      hour: hour,
+      minute: minute,
+    );
+
+    return time.format(context);
+  }
+
+  Future<void> _openReminderPage(Widget page) async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => page,
+      ),
+    );
+
+    if (!mounted) return;
+
+    await _loadReminderSummary();
   }
 
   Future<void> _loadProfile() async {
@@ -325,59 +367,12 @@ class _MenuViewState extends State<MenuView> {
                     const SizedBox(height: 25),
 
                     /// =================================================
-                    /// MY PLAN TITLE
+                    /// TODAY'S REMINDERS
                     /// =================================================
 
-                    Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 20,
-                      ),
+                    _buildReminderSection(),
 
-                      child: Row(
-                        mainAxisAlignment:
-                        MainAxisAlignment.spaceBetween,
-
-                        children: [
-                          Text(
-                            "My Plan",
-                            style: TextStyle(
-                              color: TColor.primaryText,
-                              fontSize: 25,
-                              fontWeight: FontWeight.w800,
-                            ),
-                          ),
-
-                          TextButton(
-                            onPressed: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) => const HomeView(),
-                                ),
-                              );
-                            },
-
-                            child: Text(
-                              "View all",
-                              style: TextStyle(
-                                color: TColor.primary,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-
-                    const SizedBox(height: 10),
-
-                    /// =================================================
-                    /// 30 DAYS MAIN PLAN CARD
-                    /// =================================================
-
-                    _buildMainPlanCard(),
-
-                    const SizedBox(height: 27),
+                    const SizedBox(height: 16),
 
                     /// =================================================
                     /// STAGE TITLE
@@ -440,7 +435,7 @@ class _MenuViewState extends State<MenuView> {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (_) => const HomeView(),
+                              builder: (_) => const PlanView(),
                             ),
                           );
                         },
@@ -512,78 +507,6 @@ class _MenuViewState extends State<MenuView> {
                     ),
 
                     const SizedBox(height: 30),
-
-                    /// =================================================
-                    /// QUICK ACCESS TITLE
-                    /// =================================================
-
-                    Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 20,
-                      ),
-
-                      child: Row(
-                        mainAxisAlignment:
-                        MainAxisAlignment.spaceBetween,
-
-                        children: [
-                          Text(
-                            "Quick Access",
-                            style: TextStyle(
-                              fontSize: 23,
-                              color: TColor.primaryText,
-                              fontWeight: FontWeight.w800,
-                            ),
-                          ),
-
-                          Text(
-                            "See all",
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: TColor.primary,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-
-                    const SizedBox(height: 15),
-
-                    /// =================================================
-                    /// QUICK ACCESS GRID
-                    /// =================================================
-
-                    Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 20,
-                      ),
-
-                      child: GridView.builder(
-                        shrinkWrap: true,
-
-                        physics:
-                        const NeverScrollableScrollPhysics(),
-
-                        itemCount: quickAccessList.length,
-
-                        gridDelegate:
-                        const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 4,
-                          crossAxisSpacing: 10,
-                          mainAxisSpacing: 12,
-                          childAspectRatio: 0.88,
-                        ),
-
-                        itemBuilder: (context, index) {
-                          final item = quickAccessList[index];
-
-                          return _buildQuickAccessCard(item);
-                        },
-                      ),
-                    ),
-
-                    const SizedBox(height: 25),
 
                     /// =================================================
                     /// BOTTOM NAVIGATION
@@ -672,7 +595,18 @@ class _MenuViewState extends State<MenuView> {
                   Stack(
                     children: [
                       IconButton(
-                        onPressed: () {},
+                        tooltip: "Schedule & Reminders",
+                        onPressed: () async {
+                          await Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const ScheduleView(),
+                            ),
+                          );
+
+                          if (!mounted) return;
+                          await _loadReminderSummary();
+                        },
 
                         icon: const Icon(
                           Icons.notifications_none_rounded,
@@ -939,6 +873,211 @@ class _MenuViewState extends State<MenuView> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildReminderSection() {
+    final List<Map<String, dynamic>> reminders = [
+      {
+        'title': 'Schedule',
+        'value': 'Manage all',
+        'enabled': true,
+        'isSchedule': true,
+        'icon': Icons.calendar_month_rounded,
+        'background': const Color(0xffEEE7FF),
+        'iconColor': TColor.primary,
+        'page': const ScheduleView(),
+      },
+      {
+        'title': 'Workout',
+        'value': workoutReminderValue,
+        'enabled': workoutReminderEnabled,
+        'icon': Icons.fitness_center_rounded,
+        'background': const Color(0xffF3ECFF),
+        'iconColor': TColor.primary,
+        'page': const WorkoutReminderView(),
+      },
+      {
+        'title': 'Water',
+        'value': waterReminderValue,
+        'enabled': waterReminderEnabled,
+        'icon': Icons.water_drop_rounded,
+        'background': const Color(0xffEAF6FF),
+        'iconColor': const Color(0xff1686E8),
+        'page': const WaterReminderView(),
+      },
+      {
+        'title': 'Meal',
+        'value': mealReminderValue,
+        'enabled': mealReminderEnabled,
+        'icon': Icons.restaurant_rounded,
+        'background': const Color(0xffFFF3E8),
+        'iconColor': const Color(0xffFF7A00),
+        'page': const MealReminderView(),
+      },
+      {
+        'title': 'Sleep',
+        'value': sleepReminderValue,
+        'enabled': sleepReminderEnabled,
+        'icon': Icons.nightlight_round,
+        'background': const Color(0xffF2ECFF),
+        'iconColor': const Color(0xff6D28D9),
+        'page': const SleepReminderView(),
+      },
+    ];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+          child: Row(
+            children: [
+              Expanded(
+                child: Text(
+                  "Today's Reminders",
+                  style: TextStyle(
+                    color: TColor.primaryText,
+                    fontSize: 20,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ),
+              Text(
+                'Swipe',
+                style: TextStyle(
+                  color: TColor.sceondarText,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(width: 4),
+              Icon(
+                Icons.swipe_left_rounded,
+                color: TColor.primary,
+                size: 17,
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 8),
+        SizedBox(
+          height: 126,
+          child: ListView.separated(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            scrollDirection: Axis.horizontal,
+            physics: const BouncingScrollPhysics(),
+            itemCount: reminders.length,
+            separatorBuilder: (_, __) => const SizedBox(width: 9),
+            itemBuilder: (context, index) {
+              return _buildReminderCard(reminders[index]);
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildReminderCard(Map<String, dynamic> reminder) {
+    final bool enabled = reminder['enabled'] as bool;
+    final bool isSchedule = reminder['isSchedule'] == true;
+    final Color iconColor = reminder['iconColor'] as Color;
+
+    return InkWell(
+      borderRadius: BorderRadius.circular(18),
+      onTap: () async {
+        await _openReminderPage(reminder['page'] as Widget);
+      },
+      child: Container(
+        width: 104,
+        padding: const EdgeInsets.fromLTRB(10, 10, 10, 9),
+        decoration: BoxDecoration(
+          color: reminder['background'] as Color,
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(
+            color: enabled
+                ? iconColor.withOpacity(0.22)
+                : Colors.transparent,
+          ),
+          boxShadow: const [
+            BoxShadow(
+              color: Color(0x0B000000),
+              blurRadius: 8,
+              offset: Offset(0, 3),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Container(
+                  width: 35,
+                  height: 35,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.82),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(
+                    reminder['icon'] as IconData,
+                    color: iconColor,
+                    size: 19,
+                  ),
+                ),
+                Container(
+                  width: 7,
+                  height: 7,
+                  decoration: BoxDecoration(
+                    color: isSchedule
+                        ? TColor.primary
+                        : enabled
+                        ? Colors.green
+                        : Colors.grey.shade400,
+                    shape: BoxShape.circle,
+                  ),
+                ),
+              ],
+            ),
+            const Spacer(),
+            Text(
+              reminder['title'].toString(),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                color: TColor.primaryText,
+                fontSize: 13,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+            const SizedBox(height: 3),
+            Text(
+              reminder['value'].toString(),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                color: iconColor,
+                fontSize: 10.5,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+            const SizedBox(height: 5),
+            Text(
+              isSchedule ? 'OPEN' : enabled ? 'ON' : 'SET',
+              style: TextStyle(
+                color: isSchedule
+                    ? TColor.primary
+                    : enabled
+                    ? Colors.green.shade700
+                    : TColor.sceondarText,
+                fontSize: 9,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -1494,213 +1633,74 @@ class _MenuViewState extends State<MenuView> {
     );
   }
   /// =====================================================
-  /// QUICK ACCESS CARD
-  /// =====================================================
-
-  Widget _buildQuickAccessCard(
-      Map<String, dynamic> item,
-      ) {
-    return InkWell(
-      borderRadius: BorderRadius.circular(16),
-
-      onTap: () {
-        _openQuickAccess(
-          item["type"].toString(),
-        );
-      },
-
-      child: Container(
-        padding: const EdgeInsets.all(9),
-
-        decoration: BoxDecoration(
-          color: Colors.white,
-
-          borderRadius: BorderRadius.circular(16),
-
-          boxShadow: const [
-            BoxShadow(
-              color: Color(0x12000000),
-              blurRadius: 12,
-              offset: Offset(0, 4),
-            ),
-          ],
-        ),
-
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-
-          children: [
-            SizedBox(
-              width: 28,
-              height: 28,
-              child: Transform.scale(
-                scale: 1.15,
-                child: Image.asset(
-                  item["icon"],
-                  fit: BoxFit.contain,
-                  color: TColor.primary,
-                ),
-              ),
-            ),
-
-            const SizedBox(height: 7),
-
-            Text(
-              item["title"],
-
-              textAlign: TextAlign.center,
-
-              maxLines: 2,
-
-              style: TextStyle(
-                fontSize: 11,
-                color: TColor.primaryText,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  /// =====================================================
-  /// QUICK ACCESS NAVIGATION
-  /// =====================================================
-
-  void _openQuickAccess(String type) {
-    Widget? page;
-
-    switch (type) {
-      case "weight":
-        page = const WeightView();
-        break;
-
-      case "training":
-        page = const HomeView();
-        break;
-
-      case "meal":
-        page = const MealPlanView();
-        break;
-
-      case "schedule":
-        page = const ScheduleView();
-        break;
-
-      case "running":
-        page = const RunningView();
-        break;
-
-      case "exercise":
-        page = const ExerciseView2View2();
-        break;
-
-      case "status":
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-              "Training Status screen coming next",
-            ),
-          ),
-        );
-        return;
-
-      case "water":
-        page = const WaterTrackerView();
-        break;
-    }
-
-    if (page != null) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (_) => page!,
-        ),
-      );
-    }
-  }
-
-  /// =====================================================
   /// BOTTOM NAVIGATION
   /// =====================================================
 
   Widget _buildBottomBar() {
-    return Container(
-      margin: const EdgeInsets.symmetric(
-        horizontal: 20,
-      ),
-
-      height: 78,
-
-      decoration: BoxDecoration(
-        color: Colors.white,
-
-        borderRadius: BorderRadius.circular(25),
-
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x16000000),
-            blurRadius: 20,
-            offset: Offset(0, 6),
-          ),
-        ],
-      ),
-
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-
-        children: [
-          _bottomItem(
-            Icons.home_rounded,
-            "Home",
-            true,
-                () {},
-          ),
-
-          _bottomItem(
-            Icons.assignment_outlined,
-            "Plan",
-            false,
-                () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => const HomeView(),
-                ),
-              );
-            },
-          ),
-
-          _bottomItem(
-            Icons.bar_chart_rounded,
-            "Reports",
-            false,
-                () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => const ReportsView(),
-                ),
-              );
-            },
-          ),
-
-          _bottomItem(
-            Icons.person_outline_rounded,
-            "Me",
-            false,
-                () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text(
-                    "Profile screen coming next",
+    return SafeArea(
+      top: false,
+      child: Container(
+        width: double.infinity,
+        height: 64,
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          boxShadow: [
+            BoxShadow(
+              color: Color(0x16000000),
+              blurRadius: 16,
+              offset: Offset(0, -3),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            _bottomItem(
+              Icons.home_rounded,
+              "Home",
+              true,
+                  () {},
+            ),
+            _bottomItem(
+              Icons.assignment_rounded,
+              "Plan",
+              false,
+                  () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const PlanView(),
                   ),
-                ),
-              );
-            },
-          ),
-        ],
+                );
+              },
+            ),
+            _bottomItem(
+              Icons.bar_chart_rounded,
+              "Reports",
+              false,
+                  () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const ReportsView(),
+                  ),
+                );
+              },
+            ),
+            _bottomItem(
+              Icons.person_outline_rounded,
+              "Me",
+              false,
+                  () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const MeView(),
+                  ),
+                );
+              },
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -1715,55 +1715,54 @@ class _MenuViewState extends State<MenuView> {
       bool active,
       VoidCallback onTap,
       ) {
-    return InkWell(
-      onTap: onTap,
-
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-
-        children: [
-          Icon(
-            icon,
-
-            color: active
-                ? TColor.primary
-                : Colors.black,
-
-            size: 26,
-          ),
-
-          const SizedBox(height: 4),
-
-          Text(
-            title,
-
-            style: TextStyle(
-              color: active
-                  ? TColor.primary
-                  : Colors.black,
-
-              fontSize: 12,
-
-              fontWeight: active
-                  ? FontWeight.w700
-                  : FontWeight.w500,
-            ),
-          ),
-
-          const SizedBox(height: 4),
-
-          if (active)
-            Container(
-              width: 25,
-              height: 3,
-
-              decoration: BoxDecoration(
-                color: TColor.primary,
-                borderRadius: BorderRadius.circular(5),
+    return Expanded(
+      child: InkWell(
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.only(top: 7),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                icon,
+                color: active
+                    ? TColor.primary
+                    : Colors.black,
+                size: 23,
               ),
-            ),
-        ],
+              const SizedBox(height: 2),
+              Text(
+                title,
+                style: TextStyle(
+                  color: active
+                      ? TColor.primary
+                      : Colors.black,
+                  fontSize: 10.5,
+                  fontWeight: active
+                      ? FontWeight.w800
+                      : FontWeight.w500,
+                ),
+              ),
+              const SizedBox(height: 3),
+              SizedBox(
+                height: 3,
+                child: active
+                    ? Container(
+                  width: 24,
+                  decoration: BoxDecoration(
+                    color: TColor.primary,
+                    borderRadius:
+                    BorderRadius.circular(5),
+                  ),
+                )
+                    : const SizedBox.shrink(),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
+
 }
