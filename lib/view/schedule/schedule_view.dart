@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../common/color_extention.dart';
 import '../reminder/workout_reminder_view.dart';
+import '../reminder/water_reminder_view.dart';
 
 class ScheduleView extends StatelessWidget {
   const ScheduleView({super.key});
@@ -79,7 +80,15 @@ class ScheduleView extends StatelessWidget {
             icon: Icons.water_drop_rounded,
             title: "Water Reminder",
             subtitle: "Remember to drink enough water",
-            enabled: false,
+            enabled: true,
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const WaterReminderView(),
+                ),
+              );
+            },
           ),
 
           _reminderCard(

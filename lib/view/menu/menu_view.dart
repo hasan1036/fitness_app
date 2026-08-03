@@ -16,6 +16,7 @@ import '../home/home_view.dart';
 import '../meal_plan/mean_plan_view.dart';
 import '../running/running_view.dart';
 import '../schedule/schedule_view.dart';
+import '../water/water_tracker_view.dart';
 import '../weight/weight_view.dart';
 import '../../common_widget/app_drawer.dart';
 import '../workout/workout_view.dart';
@@ -128,9 +129,9 @@ class _MenuViewState extends State<MenuView> {
       "type": "status",
     },
     {
-      "title": "Tips",
+      "title": "Water",
       "icon": "assets/img/light.png",
-      "type": "tips",
+      "type": "water",
     },
   ];
 
@@ -1145,353 +1146,353 @@ class _MenuViewState extends State<MenuView> {
   /// =====================================================
   /// DAY CARD
   /// =====================================================
-Widget _buildDayCard({
-required Map<String, dynamic> item,
-required int index,
-required bool active,
-}) {
+  Widget _buildDayCard({
+    required Map<String, dynamic> item,
+    required int index,
+    required bool active,
+  }) {
 
-final int dayNumber = index + 1;
+    final int dayNumber = index + 1;
 
-return FutureBuilder<WorkoutProgress>(
-future: WorkoutProgressService.getProgress(dayNumber),
-builder: (context, snapshot) {
+    return FutureBuilder<WorkoutProgress>(
+      future: WorkoutProgressService.getProgress(dayNumber),
+      builder: (context, snapshot) {
 
-final WorkoutProgress progress =
-snapshot.data ??
-const WorkoutProgress(
-started: false,
-completed: false,
-currentExerciseIndex: 0,
-totalExercises: 0,
-);
+        final WorkoutProgress progress =
+            snapshot.data ??
+                const WorkoutProgress(
+                  started: false,
+                  completed: false,
+                  currentExerciseIndex: 0,
+                  totalExercises: 0,
+                );
 
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(
-        20,
-        0,
-        20,
-        15,
-      ),
+        return Padding(
+          padding: const EdgeInsets.fromLTRB(
+            20,
+            0,
+            20,
+            15,
+          ),
 
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
 
-        children: [
-          /// =================================================
-          /// LEFT TIMELINE
-          /// =================================================
+            children: [
+              /// =================================================
+              /// LEFT TIMELINE
+              /// =================================================
 
-          SizedBox(
-            width: 45,
-            height: active ? 205 : 145,
+              SizedBox(
+                width: 45,
+                height: active ? 205 : 145,
 
-            child: Column(
-              children: [
-                GestureDetector(
+                child: Column(
+                  children: [
+                    GestureDetector(
+                      onTap: () {
+                        setState(() {
+                          selectedDay = index;
+                        });
+                      },
+
+                      child: Container(
+                        width: 27,
+                        height: 27,
+
+                        padding: const EdgeInsets.all(4),
+
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+
+                          border: Border.all(
+                            width: 2,
+
+                            color: active
+                                ? TColor.primary
+                                : Colors.black12,
+                          ),
+                        ),
+
+                        child: Container(
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+
+                            color: active
+                                ? TColor.primary
+                                : Colors.transparent,
+                          ),
+                        ),
+                      ),
+                    ),
+
+                    if (index != dayList.length - 1)
+                      Expanded(
+                        child: Container(
+                          width: 1.5,
+                          color: const Color(0xffDDD8E5),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+
+
+              /// =================================================
+              /// DAY CARD
+              /// =================================================
+
+              Expanded(
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(22),
+
                   onTap: () {
                     setState(() {
                       selectedDay = index;
                     });
                   },
 
-                  child: Container(
-                    width: 27,
-                    height: 27,
+                  child: AnimatedContainer(
+                    duration: const Duration(
+                      milliseconds: 250,
+                    ),
 
-                    padding: const EdgeInsets.all(4),
+                    height: active ? 190 : 130,
 
                     decoration: BoxDecoration(
-                      shape: BoxShape.circle,
+                      borderRadius: BorderRadius.circular(22),
 
-                      border: Border.all(
-                        width: 2,
-
-                        color: active
-                            ? TColor.primary
-                            : Colors.black12,
+                      gradient: active
+                          ? LinearGradient(
+                        colors: [
+                          TColor.primary,
+                          const Color(0xff8748E8),
+                        ],
+                      )
+                          : LinearGradient(
+                        colors: [
+                          TColor.purpleSoft,
+                          const Color(0xffFBF9FF),
+                        ],
                       ),
                     ),
 
-                    child: Container(
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
+                    child: Stack(
+                      children: [
+                        /// PERSON IMAGE
 
-                        color: active
-                            ? TColor.primary
-                            : Colors.transparent,
-                      ),
-                    ),
-                  ),
-                ),
+                        Positioned(
+                          right: 0,
+                          bottom: 0,
 
-                if (index != dayList.length - 1)
-                  Expanded(
-                    child: Container(
-                      width: 1.5,
-                      color: const Color(0xffDDD8E5),
-                    ),
-                  ),
-              ],
-            ),
-          ),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(22),
 
+                            child: Image.asset(
+                              item["image"],
 
-          /// =================================================
-          /// DAY CARD
-          /// =================================================
+                              width: active ? 155 : 125,
+                              height: active ? 175 : 125,
 
-          Expanded(
-            child: InkWell(
-              borderRadius: BorderRadius.circular(22),
-
-              onTap: () {
-                setState(() {
-                  selectedDay = index;
-                });
-              },
-
-              child: AnimatedContainer(
-                duration: const Duration(
-                  milliseconds: 250,
-                ),
-
-                height: active ? 190 : 130,
-
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(22),
-
-                  gradient: active
-                      ? LinearGradient(
-                    colors: [
-                      TColor.primary,
-                      const Color(0xff8748E8),
-                    ],
-                  )
-                      : LinearGradient(
-                    colors: [
-                      TColor.purpleSoft,
-                      const Color(0xffFBF9FF),
-                    ],
-                  ),
-                ),
-
-                child: Stack(
-                  children: [
-                    /// PERSON IMAGE
-
-                    Positioned(
-                      right: 0,
-                      bottom: 0,
-
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(22),
-
-                        child: Image.asset(
-                          item["image"],
-
-                          width: active ? 155 : 125,
-                          height: active ? 175 : 125,
-
-                          fit: BoxFit.cover,
+                              fit: BoxFit.cover,
+                            ),
+                          ),
                         ),
-                      ),
-                    ),
 
-                    /// DAY INFORMATION
+                        /// DAY INFORMATION
 
-                    Padding(
-                      padding: const EdgeInsets.all(20),
+                        Padding(
+                          padding: const EdgeInsets.all(20),
 
-                      child: Column(
-                        crossAxisAlignment:
-                        CrossAxisAlignment.start,
+                          child: Column(
+                            crossAxisAlignment:
+                            CrossAxisAlignment.start,
 
-                        children: [
-                          Text(
-                            item["day"],
+                            children: [
+                              Text(
+                                item["day"],
 
-                            style: TextStyle(
-                              color: active
-                                  ? Colors.white
-                                  : TColor.primaryText,
-
-                              fontSize: active ? 25 : 23,
-
-                              fontWeight: FontWeight.w800,
-                            ),
-                          ),
-
-                          const SizedBox(height: 8),
-
-                          Text(
-                            "${item["time"]} • ${item["calorie"]}",
-
-
-
-                            style: TextStyle(
-                              color: active
-                                  ? Colors.white
-                                  : TColor.primaryText,
-
-                              fontSize: 14,
-                            ),
-                          ),
-                          if (progress.started) ...[
-                            const SizedBox(height: 8),
-
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: Text(
-                                    progress.completed
-                                        ? "Workout completed"
-                                        : progress.progressText,
-                                    style: TextStyle(
-                                      color: active
-                                          ? Colors.white70
-                                          : TColor.primaryText,
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                ),
-
-                                Text(
-                                  "${(progress.progress * 100).round()}%",
-                                  style: TextStyle(
-                                    color: progress.completed
-                                        ? Colors.green
-                                        : active
-                                        ? Colors.white
-                                        : TColor.primary,
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w800,
-                                  ),
-                                ),
-                              ],
-                            ),
-
-                            const SizedBox(height: 7),
-
-                            ClipRRect(
-                              borderRadius: BorderRadius.circular(20),
-
-                              child: LinearProgressIndicator(
-                                value: progress.progress,
-                                minHeight: 6,
-
-                                backgroundColor: active
-                                    ? Colors.white24
-                                    : TColor.primaryLight,
-
-                                valueColor: AlwaysStoppedAnimation<Color>(
-                                  progress.completed
-                                      ? Colors.green
-                                      : active
+                                style: TextStyle(
+                                  color: active
                                       ? Colors.white
-                                      : TColor.primary,
+                                      : TColor.primaryText,
+
+                                  fontSize: active ? 25 : 23,
+
+                                  fontWeight: FontWeight.w800,
                                 ),
                               ),
-                            ),
-                          ],
-                          /// START button শুধু selected Day-তে থাকবে
 
-                          if (active) ...[
-                            const Spacer(),
+                              const SizedBox(height: 8),
 
-                            InkWell(
-                              borderRadius:
-                              BorderRadius.circular(30),
-                              onTap: () async {
-                                await Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (_) => WorkoutDayView(
-                                      dayNumber: index + 1,
-                                    ),
-                                  ),
-                                );
+                              Text(
+                                "${item["time"]} • ${item["calorie"]}",
 
-                                if (!mounted) return;
 
-                                await _loadWorkoutStats();
 
-                                setState(() {});
-                              },
+                                style: TextStyle(
+                                  color: active
+                                      ? Colors.white
+                                      : TColor.primaryText,
 
-                              child: Container(
-                                width: 185,
-                                height: 48,
-
-                                decoration: BoxDecoration(
-                                  color: Colors.white,
-
-                                  borderRadius:
-                                  BorderRadius.circular(30),
+                                  fontSize: 14,
                                 ),
+                              ),
+                              if (progress.started) ...[
+                                const SizedBox(height: 8),
 
-                                child: Row(
-                                  mainAxisAlignment:
-                                  MainAxisAlignment.center,
-
+                                Row(
                                   children: [
-                                     Expanded(
-                                      child: Center(
-                                        child:  Text(
-                                          progress.completed
-                                              ? "REPEAT"
-                                              : progress.started
-                                              ? "CONTINUE"
-                                              : "START",
-                                          style: const TextStyle(
-                                            color: Colors.black,
-                                            fontSize: 17,
-                                            fontWeight: FontWeight.w800,
-                                          ),
+                                    Expanded(
+                                      child: Text(
+                                        progress.completed
+                                            ? "Workout completed"
+                                            : progress.progressText,
+                                        style: TextStyle(
+                                          color: active
+                                              ? Colors.white70
+                                              : TColor.primaryText,
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.w600,
                                         ),
                                       ),
                                     ),
 
-                                    Container(
-                                      margin:
-                                      const EdgeInsets.only(
-                                        right: 6,
-                                      ),
-
-                                      width: 35,
-                                      height: 35,
-
-                                      decoration: BoxDecoration(
-                                        shape: BoxShape.circle,
-                                        color: TColor.primary,
-                                      ),
-
-                                      child: const Icon(
-                                        Icons.arrow_forward_ios,
-                                        color: Colors.white,
-                                        size: 16,
+                                    Text(
+                                      "${(progress.progress * 100).round()}%",
+                                      style: TextStyle(
+                                        color: progress.completed
+                                            ? Colors.green
+                                            : active
+                                            ? Colors.white
+                                            : TColor.primary,
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w800,
                                       ),
                                     ),
                                   ],
                                 ),
-                              ),
-                            ),
-                          ],
-                        ],
-                      ),
+
+                                const SizedBox(height: 7),
+
+                                ClipRRect(
+                                  borderRadius: BorderRadius.circular(20),
+
+                                  child: LinearProgressIndicator(
+                                    value: progress.progress,
+                                    minHeight: 6,
+
+                                    backgroundColor: active
+                                        ? Colors.white24
+                                        : TColor.primaryLight,
+
+                                    valueColor: AlwaysStoppedAnimation<Color>(
+                                      progress.completed
+                                          ? Colors.green
+                                          : active
+                                          ? Colors.white
+                                          : TColor.primary,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                              /// START button শুধু selected Day-তে থাকবে
+
+                              if (active) ...[
+                                const Spacer(),
+
+                                InkWell(
+                                  borderRadius:
+                                  BorderRadius.circular(30),
+                                  onTap: () async {
+                                    await Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (_) => WorkoutDayView(
+                                          dayNumber: index + 1,
+                                        ),
+                                      ),
+                                    );
+
+                                    if (!mounted) return;
+
+                                    await _loadWorkoutStats();
+
+                                    setState(() {});
+                                  },
+
+                                  child: Container(
+                                    width: 185,
+                                    height: 48,
+
+                                    decoration: BoxDecoration(
+                                      color: Colors.white,
+
+                                      borderRadius:
+                                      BorderRadius.circular(30),
+                                    ),
+
+                                    child: Row(
+                                      mainAxisAlignment:
+                                      MainAxisAlignment.center,
+
+                                      children: [
+                                        Expanded(
+                                          child: Center(
+                                            child:  Text(
+                                              progress.completed
+                                                  ? "REPEAT"
+                                                  : progress.started
+                                                  ? "CONTINUE"
+                                                  : "START",
+                                              style: const TextStyle(
+                                                color: Colors.black,
+                                                fontSize: 17,
+                                                fontWeight: FontWeight.w800,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+
+                                        Container(
+                                          margin:
+                                          const EdgeInsets.only(
+                                            right: 6,
+                                          ),
+
+                                          width: 35,
+                                          height: 35,
+
+                                          decoration: BoxDecoration(
+                                            shape: BoxShape.circle,
+                                            color: TColor.primary,
+                                          ),
+
+                                          child: const Icon(
+                                            Icons.arrow_forward_ios,
+                                            color: Colors.white,
+                                            size: 16,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ],
+                          ),
+                        ),
+                      ],
                     ),
-                  ],
+                  ),
                 ),
               ),
-            ),
+            ],
           ),
-        ],
-      ),
+        );
+      },
     );
-},
-);
-}
+  }
   /// =====================================================
   /// QUICK ACCESS CARD
   /// =====================================================
@@ -1605,15 +1606,9 @@ totalExercises: 0,
         );
         return;
 
-      case "tips":
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-              "Tips screen coming next",
-            ),
-          ),
-        );
-        return;
+      case "water":
+        page = const WaterTrackerView();
+        break;
     }
 
     if (page != null) {
