@@ -36,9 +36,9 @@ class _MeViewState extends State<MeView> {
   Future<void> _loadData() async {
     final String name = await ProfileService.getName();
     final String? imagePath =
-        await ProfileService.getImagePath();
+    await ProfileService.getImagePath();
     final UserProfileData data =
-        await UserProfileService.getProfile();
+    await UserProfileService.getProfile();
     final String unit = await WeightUnitService.getUnit();
 
     if (!mounted) return;
@@ -66,11 +66,28 @@ class _MeViewState extends State<MeView> {
   String _goalText(String goalType) {
     switch (goalType) {
       case "gain_weight":
-        return "Gain Weight";
+        return context.tr('gainWeightTitle');
       case "maintain_weight":
-        return "Maintain Weight";
+        return context.tr('maintainWeightTitle');
       default:
-        return "Lose Weight";
+        return context.tr('loseWeightTitle');
+    }
+  }
+
+  String _bmiStatusText(String status) {
+    switch (status.toLowerCase()) {
+      case 'underweight':
+        return context.tr('underweight');
+      case 'normal':
+      case 'normal weight':
+        return context.tr('normalWeight');
+      case 'overweight':
+        return context.tr('overweight');
+      case 'obese':
+      case 'obesity':
+        return context.tr('obese');
+      default:
+        return status.isEmpty ? context.tr('notSet') : status;
     }
   }
 
@@ -78,16 +95,16 @@ class _MeViewState extends State<MeView> {
   Widget build(BuildContext context) {
     final UserProfileData data =
         profile ??
-        const UserProfileData(
-          startWeight: 0,
-          currentWeight: 0,
-          targetWeight: 0,
-          heightCm: 0,
-          age: 0,
-          gender: "",
-          goalType: "lose_weight",
-          profileCompleted: false,
-        );
+            const UserProfileData(
+              startWeight: 0,
+              currentWeight: 0,
+              targetWeight: 0,
+              heightCm: 0,
+              age: 0,
+              gender: "",
+              goalType: "lose_weight",
+              profileCompleted: false,
+            );
 
     return Scaffold(
       backgroundColor: const Color(0xffF7F3FD),
@@ -103,8 +120,9 @@ class _MeViewState extends State<MeView> {
             color: Colors.black,
           ),
         ),
-        title: Text(context.tr('me'),
-          style: TextStyle(
+        title: Text(
+          context.tr('me'),
+          style: const TextStyle(
             color: Colors.black,
             fontSize: 22,
             fontWeight: FontWeight.w800,
@@ -122,147 +140,149 @@ class _MeViewState extends State<MeView> {
       ),
       body: isLoading
           ? Center(
-              child: CircularProgressIndicator(
-                color: TColor.primary,
-              ),
-            )
+        child: CircularProgressIndicator(
+          color: TColor.primary,
+        ),
+      )
           : ListView(
-              padding: const EdgeInsets.fromLTRB(
-                20,
-                8,
-                20,
-                30,
-              ),
-              children: [
-                _buildProfileHeader(data),
-                const SizedBox(height: 18),
-                _buildBodySummary(data),
-                const SizedBox(height: 22),
-                Text(context.tr('myHealth'),
-                  style: TextStyle(
-                    color: TColor.primaryText,
-                    fontSize: 21,
-                    fontWeight: FontWeight.w900,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                Row(
-                  children: [
-                    Expanded(
-                      child: _summaryCard(
-                        icon: Icons.monitor_weight_rounded,
-                        value: data.currentWeight > 0
-                            ? WeightUnitService.formatKg(data.currentWeight, weightUnit)
-                            : "-- ${WeightUnitService.label(weightUnit)}",
-                        title: "Current Weight",
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: _summaryCard(
-                        icon: Icons.analytics_rounded,
-                        value: data.bmi > 0
-                            ? data.bmi.toStringAsFixed(1)
-                            : "--",
-                        title: "BMI",
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                Row(
-                  children: [
-                    Expanded(
-                      child: _summaryCard(
-                        icon: Icons.flag_rounded,
-                        value: data.targetWeight > 0
-                            ? WeightUnitService.formatKg(data.targetWeight, weightUnit)
-                            : "-- ${WeightUnitService.label(weightUnit)}",
-                        title: "Target Weight",
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: _summaryCard(
-                        icon: Icons.emoji_events_rounded,
-                        value: "${(data.goalProgress * 100).round()}%",
-                        title: "Goal Progress",
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 24),
-                Text(context.tr('manage'),
-                  style: TextStyle(
-                    color: TColor.primaryText,
-                    fontSize: 21,
-                    fontWeight: FontWeight.w900,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                _menuTile(
-                  icon: Icons.monitor_weight_rounded,
-                  title: "Weight Progress",
-                  subtitle: "Track your body weight",
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => const WeightProgressView(),
-                      ),
-                    );
-                  },
-                ),
-                _menuTile(
-                  icon: Icons.water_drop_rounded,
-                  title: "Water Tracker",
-                  subtitle: "Daily goal and history",
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) =>
-                            const WaterTrackerView(),
-                      ),
-                    );
-                  },
-                ),
-                _menuTile(
-                  icon: Icons.restaurant_menu_rounded,
-                  title: "Meal Plan",
-                  subtitle: "Meals and nutrition",
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) =>
-                            const MealPlanView(),
-                      ),
-                    );
-                  },
-                ),
-                _menuTile(
-                  icon: Icons.notifications_active_rounded,
-                  title: "Schedule & Reminders",
-                  subtitle: "Manage all reminders",
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) =>
-                            const ScheduleView(),
-                      ),
-                    );
-                  },
-                ),
-                _menuTile(
-                  icon: Icons.person_rounded,
-                  title: "Edit Personal Information",
-                  subtitle: "Age, height, gender and goal",
-                  onTap: _openProfileSetup,
-                ),
-              ],
+        padding: const EdgeInsets.fromLTRB(
+          20,
+          8,
+          20,
+          30,
+        ),
+        children: [
+          _buildProfileHeader(data),
+          const SizedBox(height: 18),
+          _buildBodySummary(data),
+          const SizedBox(height: 22),
+          Text(
+            context.tr('myHealth'),
+            style: TextStyle(
+              color: TColor.primaryText,
+              fontSize: 21,
+              fontWeight: FontWeight.w900,
             ),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: _summaryCard(
+                  icon: Icons.monitor_weight_rounded,
+                  value: data.currentWeight > 0
+                      ? WeightUnitService.formatKg(data.currentWeight, weightUnit)
+                      : "-- ${WeightUnitService.label(weightUnit)}",
+                  title: context.tr('currentWeight'),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _summaryCard(
+                  icon: Icons.analytics_rounded,
+                  value: data.bmi > 0
+                      ? data.bmi.toStringAsFixed(1)
+                      : "--",
+                  title: context.tr('bmi'),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: _summaryCard(
+                  icon: Icons.flag_rounded,
+                  value: data.targetWeight > 0
+                      ? WeightUnitService.formatKg(data.targetWeight, weightUnit)
+                      : "-- ${WeightUnitService.label(weightUnit)}",
+                  title: context.tr('targetWeight'),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _summaryCard(
+                  icon: Icons.emoji_events_rounded,
+                  value: "${(data.goalProgress * 100).round()}%",
+                  title: context.tr('goalProgress'),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 24),
+          Text(
+            context.tr('manage'),
+            style: TextStyle(
+              color: TColor.primaryText,
+              fontSize: 21,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+          const SizedBox(height: 12),
+          _menuTile(
+            icon: Icons.monitor_weight_rounded,
+            title: context.tr('weightProgress'),
+            subtitle: context.tr('trackBodyWeight'),
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const WeightProgressView(),
+                ),
+              );
+            },
+          ),
+          _menuTile(
+            icon: Icons.water_drop_rounded,
+            title: context.tr('waterTracker'),
+            subtitle: context.tr('dailyGoalHistory'),
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) =>
+                  const WaterTrackerView(),
+                ),
+              );
+            },
+          ),
+          _menuTile(
+            icon: Icons.restaurant_menu_rounded,
+            title: context.tr('mealPlan'),
+            subtitle: context.tr('mealsNutrition'),
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) =>
+                  const MealPlanView(),
+                ),
+              );
+            },
+          ),
+          _menuTile(
+            icon: Icons.notifications_active_rounded,
+            title: context.tr('scheduleReminders'),
+            subtitle: context.tr('manageAllReminders'),
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) =>
+                  const ScheduleView(),
+                ),
+              );
+            },
+          ),
+          _menuTile(
+            icon: Icons.person_rounded,
+            title: context.tr('editPersonalInformation'),
+            subtitle: context.tr('ageHeightGenderGoal'),
+            onTap: _openProfileSetup,
+          ),
+        ],
+      ),
     );
   }
 
@@ -286,10 +306,10 @@ class _MeViewState extends State<MeView> {
             radius: 48,
             backgroundColor: Colors.white,
             backgroundImage: profileImagePath != null &&
-                    File(profileImagePath!).existsSync()
+                File(profileImagePath!).existsSync()
                 ? FileImage(File(profileImagePath!))
                 : const AssetImage("assets/img/u1.png")
-                    as ImageProvider,
+            as ImageProvider,
           ),
           const SizedBox(height: 14),
           Text(
@@ -306,7 +326,10 @@ class _MeViewState extends State<MeView> {
           Text(
             data.profileCompleted
                 ? _goalText(data.goalType)
-                : "Complete your fitness profile",
+                : context.tr('completeFitnessProfile'),
+            textAlign: TextAlign.center,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
             style: TextStyle(
               color: Colors.white.withOpacity(0.85),
               fontSize: 13,
@@ -322,8 +345,8 @@ class _MeViewState extends State<MeView> {
               icon: const Icon(Icons.edit_rounded),
               label: Text(
                 data.profileCompleted
-                    ? "EDIT PROFILE"
-                    : "SET UP PROFILE",
+                    ? context.tr('editProfile')
+                    : context.tr('setupProfile'),
                 style: const TextStyle(
                   fontWeight: FontWeight.w800,
                 ),
@@ -355,14 +378,14 @@ class _MeViewState extends State<MeView> {
         children: [
           Expanded(
             child: _smallInfo(
-              "Age",
+              context.tr('age'),
               data.age > 0 ? "${data.age}" : "--",
             ),
           ),
           _divider(),
           Expanded(
             child: _smallInfo(
-              "Height",
+              context.tr('height'),
               data.heightCm > 0
                   ? "${data.heightCm.toStringAsFixed(0)} cm"
                   : "--",
@@ -371,8 +394,8 @@ class _MeViewState extends State<MeView> {
           _divider(),
           Expanded(
             child: _smallInfo(
-              "BMI Status",
-              data.bmiStatus,
+              context.tr('bmiStatus'),
+              _bmiStatusText(data.bmiStatus),
             ),
           ),
         ],
@@ -497,6 +520,8 @@ class _MeViewState extends State<MeView> {
         ),
         title: Text(
           title,
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
           style: const TextStyle(
             fontSize: 15,
             fontWeight: FontWeight.w800,
@@ -504,6 +529,8 @@ class _MeViewState extends State<MeView> {
         ),
         subtitle: Text(
           subtitle,
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
           style: TextStyle(
             color: TColor.sceondarText,
             fontSize: 11,
