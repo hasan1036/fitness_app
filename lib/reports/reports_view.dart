@@ -6,8 +6,6 @@ import '../service/workout_stats_service.dart';
 import 'achievement_view.dart';
 import 'workout_history_view.dart';
 import 'weight_progress_view.dart';
-import 'achievement_view.dart';
-import 'workout_history_view.dart';
 import 'calendar_view.dart';
 
 import '../l10n/app_localizations.dart';
@@ -135,8 +133,9 @@ class _ReportsViewState extends State<ReportsView> {
           ),
         ),
 
-        title: Text(context.tr('reports'),
-          style: TextStyle(
+        title: Text(
+          context.tr('reports'),
+          style: const TextStyle(
             color: Colors.black,
             fontSize: 22,
             fontWeight: FontWeight.w800,
@@ -160,7 +159,7 @@ class _ReportsViewState extends State<ReportsView> {
 
             children: [
               Text(
-                "Workout Summary",
+                context.tr('workoutSummary'),
                 style: TextStyle(
                   color: TColor.primaryText,
                   fontSize: 24,
@@ -175,7 +174,7 @@ class _ReportsViewState extends State<ReportsView> {
                   Expanded(
                     child: _summaryCard(
                       icon: Icons.fitness_center_rounded,
-                      title: "Workouts",
+                      title: context.tr('workouts'),
                       value: isLoading
                           ? "..."
                           : totalWorkouts.toString(),
@@ -187,7 +186,7 @@ class _ReportsViewState extends State<ReportsView> {
                   Expanded(
                     child: _summaryCard(
                       icon: Icons.local_fire_department_rounded,
-                      title: "Calories",
+                      title: context.tr('calories'),
                       value: isLoading
                           ? "..."
                           : "${totalCalories.toStringAsFixed(0)} kcal",
@@ -203,10 +202,10 @@ class _ReportsViewState extends State<ReportsView> {
                   Expanded(
                     child: _summaryCard(
                       icon: Icons.bolt_rounded,
-                      title: "Streak",
+                      title: context.tr('streak'),
                       value: isLoading
                           ? "..."
-                          : "$currentStreak Days",
+                          : "$currentStreak ${context.tr('days')}",
                     ),
                   ),
 
@@ -215,7 +214,7 @@ class _ReportsViewState extends State<ReportsView> {
                   Expanded(
                     child: _summaryCard(
                       icon: Icons.check_circle_rounded,
-                      title: "Completed",
+                      title: context.tr('completed'),
                       value: isLoading
                           ? "..."
                           : "$completedDays / 30",
@@ -227,7 +226,7 @@ class _ReportsViewState extends State<ReportsView> {
               const SizedBox(height: 28),
 
               Text(
-                "Weekly Progress",
+                context.tr('weeklyProgress'),
                 style: TextStyle(
                   color: TColor.primaryText,
                   fontSize: 21,
@@ -260,14 +259,14 @@ class _ReportsViewState extends State<ReportsView> {
                       mainAxisAlignment:
                       MainAxisAlignment.spaceBetween,
 
-                      children: const [
-                        Text("Mon"),
-                        Text("Tue"),
-                        Text("Wed"),
-                        Text("Thu"),
-                        Text("Fri"),
-                        Text("Sat"),
-                        Text("Sun"),
+                      children: [
+                        Text(context.tr('mondayShort')),
+                        Text(context.tr('tuesdayShort')),
+                        Text(context.tr('wednesdayShort')),
+                        Text(context.tr('thursdayShort')),
+                        Text(context.tr('fridayShort')),
+                        Text(context.tr('saturdayShort')),
+                        Text(context.tr('sundayShort')),
                       ],
                     ),
 
@@ -315,7 +314,7 @@ class _ReportsViewState extends State<ReportsView> {
               const SizedBox(height: 28),
 
               Text(
-                "More Reports",
+                context.tr('moreReports'),
                 style: TextStyle(
                   color: TColor.primaryText,
                   fontSize: 21,
@@ -327,8 +326,8 @@ class _ReportsViewState extends State<ReportsView> {
 
               _reportTile(
                 icon: Icons.calendar_month_rounded,
-                title: "Workout Calendar",
-                subtitle: "See your completed workout days",
+                title: context.tr('workoutCalendar'),
+                subtitle: context.tr('seeCompletedWorkoutDays'),
                 onTap: () {
                   Navigator.push(
                     context,
@@ -341,8 +340,8 @@ class _ReportsViewState extends State<ReportsView> {
 
               _reportTile(
                 icon: Icons.monitor_weight_rounded,
-                title: "Weight Progress",
-                subtitle: "Track your weight changes",
+                title: context.tr('weightProgress'),
+                subtitle: context.tr('trackWeightChanges'),
                 onTap: () {
                   Navigator.push(
                     context,
@@ -355,8 +354,8 @@ class _ReportsViewState extends State<ReportsView> {
 
               _reportTile(
                 icon: Icons.history_rounded,
-                title: "Workout History",
-                subtitle: "View your previous workouts",
+                title: context.tr('workoutHistory'),
+                subtitle: context.tr('viewPreviousWorkouts'),
 
                 onTap: () {
                   Navigator.push(
@@ -371,8 +370,8 @@ class _ReportsViewState extends State<ReportsView> {
 
               _reportTile(
                 icon: Icons.emoji_events_rounded,
-                title: "Achievements",
-                subtitle: "See your badges and milestones",
+                title: context.tr('achievements'),
+                subtitle: context.tr('seeBadgesMilestones'),
                 onTap: () {
                   Navigator.push(
                     context,
@@ -433,6 +432,8 @@ class _ReportsViewState extends State<ReportsView> {
 
           Text(
             value,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
             style: TextStyle(
               color: TColor.primaryText,
               fontSize: 23,
@@ -444,6 +445,8 @@ class _ReportsViewState extends State<ReportsView> {
 
           Text(
             title,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
             style: TextStyle(
               color: TColor.sceondarText,
               fontSize: 13,
@@ -492,6 +495,8 @@ class _ReportsViewState extends State<ReportsView> {
 
         title: Text(
           title,
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
           style: const TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w800,
@@ -500,6 +505,8 @@ class _ReportsViewState extends State<ReportsView> {
 
         subtitle: Text(
           subtitle,
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
           style: TextStyle(
             color: TColor.sceondarText,
             fontSize: 12,
