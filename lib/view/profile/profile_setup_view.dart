@@ -2,7 +2,10 @@ import 'package:flutter/material.dart';
 
 import '../../common/color_extention.dart';
 import '../../service/user_profile_service.dart';
+import '../../service/weight_unit_service.dart';
+import 'me_view.dart';
 
+import '../../l10n/app_localizations.dart';
 class ProfileSetupView extends StatefulWidget {
   const ProfileSetupView({super.key});
 
@@ -31,6 +34,28 @@ class _ProfileSetupViewState extends State<ProfileSetupView> {
   String selectedGender = "male";
 
   bool isSaving = false;
+  String weightUnit = WeightUnitService.kilograms;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadInitialData();
+  }
+
+  Future<void> _loadInitialData() async {
+    final String unit = await WeightUnitService.getUnit();
+    final UserProfileData data = await UserProfileService.getProfile();
+    if (!mounted) return;
+    setState(() {
+      weightUnit = unit;
+      if (data.age > 0) _ageController.text = data.age.toString();
+      if (data.heightCm > 0) _heightController.text = data.heightCm.toStringAsFixed(0);
+      if (data.currentWeight > 0) _currentWeightController.text = WeightUnitService.fromKg(data.currentWeight, unit).toStringAsFixed(1);
+      if (data.targetWeight > 0) _targetWeightController.text = WeightUnitService.fromKg(data.targetWeight, unit).toStringAsFixed(1);
+      if (data.gender.isNotEmpty) selectedGender = data.gender;
+      if (data.goalType.isNotEmpty) selectedGoal = data.goalType;
+    });
+  }
 
   @override
   void dispose() {
@@ -52,15 +77,17 @@ class _ProfileSetupViewState extends State<ProfileSetupView> {
     final double height =
     double.parse(_heightController.text.trim());
 
+    final double currentWeightInput =
+    double.parse(_currentWeightController.text.trim());
+
     final double currentWeight =
-    double.parse(
-      _currentWeightController.text.trim(),
-    );
+    WeightUnitService.toKg(currentWeightInput, weightUnit);
+
+    final double targetWeightInput =
+    double.parse(_targetWeightController.text.trim());
 
     final double targetWeight =
-    double.parse(
-      _targetWeightController.text.trim(),
-    );
+    WeightUnitService.toKg(targetWeightInput, weightUnit);
 
     if (selectedGoal == "lose_weight" &&
         targetWeight >= currentWeight) {
@@ -98,7 +125,12 @@ class _ProfileSetupViewState extends State<ProfileSetupView> {
       isSaving = false;
     });
 
-    Navigator.pop(context, true);
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (_) => const MeView(),
+      ),
+    );
   }
 
   void _showMessage(String message) {
@@ -262,7 +294,7 @@ class _ProfileSetupViewState extends State<ProfileSetupView> {
                 _currentWeightController,
                 label: "Current Weight",
                 hint: "Enter current weight",
-                suffix: "kg",
+                suffix: WeightUnitService.label(weightUnit),
                 icon:
                 Icons.monitor_weight_rounded,
                 keyboardType:
@@ -274,8 +306,8 @@ class _ProfileSetupViewState extends State<ProfileSetupView> {
                   return _validateNumber(
                     value,
                     fieldName: "Current weight",
-                    min: 25,
-                    max: 500,
+                    min: weightUnit == WeightUnitService.pounds ? 55 : 25,
+                    max: weightUnit == WeightUnitService.pounds ? 1100 : 500,
                   );
                 },
               ),
@@ -287,7 +319,7 @@ class _ProfileSetupViewState extends State<ProfileSetupView> {
                 _targetWeightController,
                 label: "Target Weight",
                 hint: "Enter target weight",
-                suffix: "kg",
+                suffix: WeightUnitService.label(weightUnit),
                 icon: Icons.flag_rounded,
                 keyboardType:
                 const TextInputType
@@ -298,8 +330,8 @@ class _ProfileSetupViewState extends State<ProfileSetupView> {
                   return _validateNumber(
                     value,
                     fieldName: "Target weight",
-                    min: 25,
-                    max: 500,
+                    min: weightUnit == WeightUnitService.pounds ? 55 : 25,
+                    max: weightUnit == WeightUnitService.pounds ? 1100 : 500,
                   );
                 },
               ),
@@ -343,8 +375,7 @@ class _ProfileSetupViewState extends State<ProfileSetupView> {
                       color: Colors.white,
                     ),
                   )
-                      : const Text(
-                    "CONTINUE",
+                      : Text(context.tr('continue'),
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight:

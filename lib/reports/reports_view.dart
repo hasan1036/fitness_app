@@ -10,6 +10,7 @@ import 'achievement_view.dart';
 import 'workout_history_view.dart';
 import 'calendar_view.dart';
 
+import '../l10n/app_localizations.dart';
 class ReportsView extends StatefulWidget {
   const ReportsView({super.key});
 
@@ -134,8 +135,7 @@ class _ReportsViewState extends State<ReportsView> {
           ),
         ),
 
-        title: const Text(
-          "Reports",
+        title: Text(context.tr('reports'),
           style: TextStyle(
             color: Colors.black,
             fontSize: 22,

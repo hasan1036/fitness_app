@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../common/color_extention.dart';
+import '../service/weight_unit_service.dart';
+import '../l10n/app_localizations.dart';
 
 class WeightProgressView extends StatefulWidget {
   const WeightProgressView({super.key});
@@ -20,6 +22,7 @@ class _WeightProgressViewState extends State<WeightProgressView> {
   double? currentWeight;
   double? goalWeight;
   bool isLoading = true;
+  String weightUnit = WeightUnitService.kilograms;
 
   List<Map<String, dynamic>> weightHistory = <Map<String, dynamic>>[];
 
@@ -31,6 +34,7 @@ class _WeightProgressViewState extends State<WeightProgressView> {
 
   Future<void> _loadWeightData() async {
     final SharedPreferences prefs = await SharedPreferences.getInstance();
+    final String savedUnit = await WeightUnitService.getUnit();
 
     final double? savedCurrentWeight = prefs.getDouble(_currentWeightKey);
     double? savedStartWeight = prefs.getDouble(_startWeightKey);
@@ -80,6 +84,7 @@ class _WeightProgressViewState extends State<WeightProgressView> {
       currentWeight = savedCurrentWeight;
       goalWeight = savedGoalWeight;
       weightHistory = parsedHistory;
+      weightUnit = savedUnit;
       isLoading = false;
     });
   }
@@ -121,12 +126,22 @@ class _WeightProgressViewState extends State<WeightProgressView> {
     final DateTime? date = DateTime.tryParse(savedDate);
     if (date == null) return savedDate;
 
-    const List<String> months = <String>[
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+    const List<String> monthKeys = <String>[
+      'januaryShort',
+      'februaryShort',
+      'marchShort',
+      'aprilShort',
+      'mayShort',
+      'juneShort',
+      'julyShort',
+      'augustShort',
+      'septemberShort',
+      'octoberShort',
+      'novemberShort',
+      'decemberShort',
     ];
 
-    return '${date.day} ${months[date.month - 1]} ${date.year}';
+    return '${date.day} ${context.tr(monthKeys[date.month - 1])} ${date.year}';
   }
 
   double get totalLost {
@@ -143,8 +158,12 @@ class _WeightProgressViewState extends State<WeightProgressView> {
   }
 
   String _weightText(double? value) {
-    return value == null ? '--' : value.toStringAsFixed(1);
+    return value == null
+        ? '--'
+        : WeightUnitService.fromKg(value, weightUnit).toStringAsFixed(1);
   }
+
+  String get _unitLabel => WeightUnitService.label(weightUnit);
 
   Future<double?> _openWeightInput({
     required String title,
@@ -200,7 +219,9 @@ class _WeightProgressViewState extends State<WeightProgressView> {
                       const SizedBox(height: 16),
                       TextFormField(
                         autofocus: true,
-                        initialValue: initialValue?.toStringAsFixed(1),
+                        initialValue: initialValue == null
+                            ? null
+                            : WeightUnitService.fromKg(initialValue, weightUnit).toStringAsFixed(1),
                         keyboardType: const TextInputType.numberWithOptions(
                           decimal: true,
                         ),
@@ -213,9 +234,9 @@ class _WeightProgressViewState extends State<WeightProgressView> {
                           }
                         },
                         decoration: InputDecoration(
-                          labelText: 'Weight',
+                          labelText: context.tr('weight'),
                           hintText: hint,
-                          suffixText: 'kg',
+                          suffixText: _unitLabel,
                           errorText: errorText,
                           border: const OutlineInputBorder(),
                         ),
@@ -228,7 +249,7 @@ class _WeightProgressViewState extends State<WeightProgressView> {
                               onPressed: () {
                                 Navigator.pop(sheetContext);
                               },
-                              child: const Text('Cancel'),
+                              child: Text(context.tr('cancel')),
                             ),
                           ),
                           const SizedBox(width: 12),
@@ -241,21 +262,26 @@ class _WeightProgressViewState extends State<WeightProgressView> {
                                     : inputValue;
                                 final double? value = double.tryParse(raw);
 
-                                if (value == null || value < 20 || value > 500) {
+                                final double minValue = weightUnit == WeightUnitService.pounds ? 44 : 20;
+                                final double maxValue = weightUnit == WeightUnitService.pounds ? 1100 : 500;
+                                if (value == null || value < minValue || value > maxValue) {
                                   setSheetState(() {
                                     errorText =
-                                    'Enter a valid weight (20–500 kg)';
+                                    '${context.tr('enterValidWeightIn')} $_unitLabel';
                                   });
                                   return;
                                 }
 
-                                Navigator.pop(sheetContext, value);
+                                Navigator.pop(
+                                  sheetContext,
+                                  WeightUnitService.toKg(value, weightUnit),
+                                );
                               },
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: TColor.primary,
                                 foregroundColor: Colors.white,
                               ),
-                              child: const Text('Save'),
+                              child: Text(context.tr('save')),
                             ),
                           ),
                         ],
@@ -273,8 +299,8 @@ class _WeightProgressViewState extends State<WeightProgressView> {
 
   Future<void> _showAddWeightDialog() async {
     final double? result = await _openWeightInput(
-      title: currentWeight == null ? 'Add Current Weight' : 'Update Weight',
-      hint: 'Enter current weight',
+      title: currentWeight == null ? context.tr('addCurrentWeight') : context.tr('updateWeight'),
+      hint: context.tr('enterCurrentWeight'),
       initialValue: currentWeight,
     );
 
@@ -308,8 +334,8 @@ class _WeightProgressViewState extends State<WeightProgressView> {
 
   Future<void> _showGoalWeightDialog() async {
     final double? result = await _openWeightInput(
-      title: goalWeight == null ? 'Set Target Weight' : 'Update Target Weight',
-      hint: 'Enter target weight',
+      title: goalWeight == null ? context.tr('setTargetWeight') : context.tr('updateTargetWeight'),
+      hint: context.tr('enterTargetWeight'),
       initialValue: goalWeight,
     );
 
@@ -371,7 +397,7 @@ class _WeightProgressViewState extends State<WeightProgressView> {
                 ),
                 const SizedBox(height: 20),
                 Text(
-                  '${weight.toStringAsFixed(1)} kg',
+                  '${WeightUnitService.fromKg(weight, weightUnit).toStringAsFixed(1)} $_unitLabel',
                   style: const TextStyle(
                     fontSize: 23,
                     fontWeight: FontWeight.w900,
@@ -388,9 +414,9 @@ class _WeightProgressViewState extends State<WeightProgressView> {
                 const SizedBox(height: 20),
                 ListTile(
                   leading: Icon(Icons.edit_rounded, color: TColor.primary),
-                  title: const Text(
-                    'Edit Weight',
-                    style: TextStyle(fontWeight: FontWeight.w700),
+                  title: Text(
+                    context.tr('editWeight'),
+                    style: const TextStyle(fontWeight: FontWeight.w700),
                   ),
                   onTap: () {
                     Navigator.pop(sheetContext);
@@ -405,9 +431,9 @@ class _WeightProgressViewState extends State<WeightProgressView> {
                     Icons.delete_outline_rounded,
                     color: Colors.red,
                   ),
-                  title: const Text(
-                    'Delete Entry',
-                    style: TextStyle(
+                  title: Text(
+                    context.tr('deleteEntry'),
+                    style: const TextStyle(
                       color: Colors.red,
                       fontWeight: FontWeight.w700,
                     ),
@@ -430,8 +456,8 @@ class _WeightProgressViewState extends State<WeightProgressView> {
     required String date,
   }) async {
     final double? result = await _openWeightInput(
-      title: 'Edit Weight',
-      hint: 'Enter corrected weight',
+      title: context.tr('editWeight'),
+      hint: context.tr('enterCorrectedWeight'),
       initialValue: oldWeight,
     );
 
@@ -459,14 +485,14 @@ class _WeightProgressViewState extends State<WeightProgressView> {
       context: context,
       builder: (BuildContext dialogContext) {
         return AlertDialog(
-          title: const Text('Delete Weight Entry?'),
-          content: const Text(
-            'This weight record will be permanently removed.',
+          title: Text(context.tr('deleteWeightEntryTitle')),
+          content: Text(
+            context.tr('deleteWeightEntryMessage'),
           ),
           actions: <Widget>[
             TextButton(
               onPressed: () => Navigator.pop(dialogContext, false),
-              child: const Text('Cancel'),
+              child: Text(context.tr('cancel')),
             ),
             ElevatedButton(
               onPressed: () => Navigator.pop(dialogContext, true),
@@ -474,7 +500,7 @@ class _WeightProgressViewState extends State<WeightProgressView> {
                 backgroundColor: Colors.red,
                 foregroundColor: Colors.white,
               ),
-              child: const Text('Delete'),
+              child: Text(context.tr('delete')),
             ),
           ],
         );
@@ -504,9 +530,9 @@ class _WeightProgressViewState extends State<WeightProgressView> {
           onPressed: () => Navigator.pop(context),
           icon: const Icon(Icons.arrow_back_rounded, color: Colors.black),
         ),
-        title: const Text(
-          'Weight Progress',
-          style: TextStyle(
+        title: Text(
+          context.tr('weightProgress'),
+          style: const TextStyle(
             color: Colors.black,
             fontSize: 22,
             fontWeight: FontWeight.w800,
@@ -519,7 +545,9 @@ class _WeightProgressViewState extends State<WeightProgressView> {
         foregroundColor: Colors.white,
         icon: const Icon(Icons.add_rounded),
         label: Text(
-          currentWeight == null ? 'Add Weight' : 'Update Weight',
+          currentWeight == null
+              ? context.tr('addWeight')
+              : context.tr('updateWeight'),
           style: const TextStyle(fontWeight: FontWeight.w700),
         ),
       ),
@@ -539,23 +567,23 @@ class _WeightProgressViewState extends State<WeightProgressView> {
                 Expanded(
                   child: _summaryCard(
                     icon: Icons.monitor_weight_rounded,
-                    title: 'Current',
-                    value: '${_weightText(currentWeight)} kg',
+                    title: context.tr('current'),
+                    value: '${_weightText(currentWeight)} $_unitLabel',
                   ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: _summaryCard(
                     icon: Icons.local_fire_department_rounded,
-                    title: 'Total Lost',
-                    value: '${totalLost.toStringAsFixed(1)} kg',
+                    title: context.tr('totalLost'),
+                    value: '${WeightUnitService.fromKg(totalLost, weightUnit).toStringAsFixed(1)} $_unitLabel',
                   ),
                 ),
               ],
             ),
             const SizedBox(height: 28),
             Text(
-              'Weight Trend',
+              context.tr('weightTrend'),
               style: TextStyle(
                 color: TColor.primaryText,
                 fontSize: 21,
@@ -569,7 +597,7 @@ class _WeightProgressViewState extends State<WeightProgressView> {
               children: <Widget>[
                 Expanded(
                   child: Text(
-                    'Weight History',
+                    context.tr('weightHistory'),
                     style: TextStyle(
                       color: TColor.primaryText,
                       fontSize: 21,
@@ -580,7 +608,7 @@ class _WeightProgressViewState extends State<WeightProgressView> {
                 TextButton(
                   onPressed: _showAddWeightDialog,
                   child: Text(
-                    currentWeight == null ? 'Add New' : 'Update Today',
+                    currentWeight == null ? context.tr('addNew') : context.tr('updateToday'),
                     style: TextStyle(
                       color: TColor.primary,
                       fontWeight: FontWeight.w700,
@@ -607,8 +635,8 @@ class _WeightProgressViewState extends State<WeightProgressView> {
 
   Widget _buildTopCard() {
     final String remainingText = remainingWeight == null
-        ? '-- kg'
-        : '${remainingWeight!.toStringAsFixed(1)} kg';
+        ? '-- $_unitLabel'
+        : '${WeightUnitService.fromKg(remainingWeight!, weightUnit).toStringAsFixed(1)} $_unitLabel';
 
     return Container(
       width: double.infinity,
@@ -624,8 +652,8 @@ class _WeightProgressViewState extends State<WeightProgressView> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          const Text(
-            'Current Weight',
+          Text(
+            context.tr('currentWeight'),
             style: TextStyle(
               color: Colors.white70,
               fontSize: 14,
@@ -644,11 +672,14 @@ class _WeightProgressViewState extends State<WeightProgressView> {
                   fontWeight: FontWeight.w900,
                 ),
               ),
-              const Padding(
-                padding: EdgeInsets.only(left: 6, bottom: 7),
+              Padding(
+                padding: const EdgeInsets.only(
+                  left: 6,
+                  bottom: 7,
+                ),
                 child: Text(
-                  'kg',
-                  style: TextStyle(
+                  _unitLabel,
+                  style: const TextStyle(
                     color: Colors.white70,
                     fontSize: 17,
                     fontWeight: FontWeight.w700,
@@ -657,7 +688,7 @@ class _WeightProgressViewState extends State<WeightProgressView> {
               ),
               const Spacer(),
               IconButton(
-                tooltip: 'Update weight',
+                tooltip: context.tr('updateWeight'),
                 onPressed: _showAddWeightDialog,
                 icon: const Icon(Icons.edit_rounded, color: Colors.white),
               ),
@@ -668,17 +699,17 @@ class _WeightProgressViewState extends State<WeightProgressView> {
             children: <Widget>[
               Expanded(
                 child: _topSmallStat(
-                  title: 'Target Weight',
-                  value: '${_weightText(goalWeight)} kg',
+                  title: context.tr('targetWeight'),
+                  value: '${_weightText(goalWeight)} $_unitLabel',
                   icon: Icons.flag_rounded,
-                  buttonText: goalWeight == null ? 'Set Target' : 'Edit',
+                  buttonText: goalWeight == null ? context.tr('setTarget') : context.tr('edit'),
                   onTap: _showGoalWeightDialog,
                 ),
               ),
               const SizedBox(width: 12),
               Expanded(
                 child: _topSmallStat(
-                  title: 'Remaining',
+                  title: context.tr('remaining'),
                   value: remainingText,
                   icon: Icons.trending_down_rounded,
                 ),
@@ -828,7 +859,7 @@ class _WeightProgressViewState extends State<WeightProgressView> {
       child: displayData.isEmpty
           ? Center(
         child: Text(
-          'Add weight entries to see your trend.',
+          context.tr('addWeightEntriesTrend'),
           textAlign: TextAlign.center,
           style: TextStyle(color: TColor.sceondarText, fontSize: 13),
         ),
@@ -882,7 +913,7 @@ class _WeightProgressViewState extends State<WeightProgressView> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
                     Text(
-                      '${weight.toStringAsFixed(1)} kg',
+                      '${WeightUnitService.fromKg(weight, weightUnit).toStringAsFixed(1)} $_unitLabel',
                       style: const TextStyle(
                         fontSize: 17,
                         fontWeight: FontWeight.w800,
@@ -909,8 +940,8 @@ class _WeightProgressViewState extends State<WeightProgressView> {
                     color: Colors.green.withOpacity(0.12),
                     borderRadius: BorderRadius.circular(20),
                   ),
-                  child: const Text(
-                    'Today',
+                  child: Text(
+                    context.tr('today'),
                     style: TextStyle(
                       color: Colors.green,
                       fontSize: 11,
@@ -955,13 +986,13 @@ class _WeightProgressViewState extends State<WeightProgressView> {
             ),
           ),
           const SizedBox(height: 16),
-          const Text(
-            'No Weight History',
+          Text(
+            context.tr('noWeightHistory'),
             style: TextStyle(fontSize: 19, fontWeight: FontWeight.w800),
           ),
           const SizedBox(height: 7),
           Text(
-            'Tap Add Weight to save your first entry.',
+            context.tr('tapAddWeightFirstEntry'),
             textAlign: TextAlign.center,
             style: TextStyle(color: TColor.sceondarText, fontSize: 13),
           ),

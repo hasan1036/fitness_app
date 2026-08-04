@@ -6,6 +6,7 @@ import '../../service/water_history_service.dart';
 import '../../models/water_history_model.dart';
 import '../reminder/water_reminder_view.dart';
 
+import '../../l10n/app_localizations.dart';
 class WaterTrackerView extends StatefulWidget {
   const WaterTrackerView({super.key});
 
@@ -33,7 +34,7 @@ class _WaterTrackerViewState
   List<WaterHistoryModel> waterHistory = [];
   int weeklyTotalMl = 0;
   int weeklyAverageMl = 0;
-  String bestDay = "No data";
+  String bestDay = '';
   int currentStreak = 0;
 
   @override
@@ -99,7 +100,7 @@ class _WaterTrackerViewState
 
     int total = 0;
     int bestAmount = 0;
-    String bestDate = "No data";
+    String bestDate = "";
 
     for (final WaterHistoryModel item
     in lastSevenDays) {
@@ -152,8 +153,8 @@ class _WaterTrackerViewState
       waterHistory = history.take(7).toList();
       weeklyTotalMl = total;
       weeklyAverageMl = average;
-      bestDay = bestDate == "No data"
-          ? "No data"
+      bestDay = bestDate.isEmpty
+          ? context.tr('noData')
           : _formatHistoryDate(bestDate);
       currentStreak = streak;
     });
@@ -225,9 +226,9 @@ class _WaterTrackerViewState
   Future<void> _addWater() async {
     if (waterCount >= dailyGoal) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
+        SnackBar(
           content: Text(
-            "Daily water goal already completed",
+            context.tr('dailyWaterGoalAlreadyCompleted'),
           ),
         ),
       );
@@ -244,9 +245,9 @@ class _WaterTrackerViewState
 
     if (waterCount == dailyGoal) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
+        SnackBar(
           content: Text(
-            "Congratulations! Daily water goal completed.",
+            context.tr('dailyWaterGoalCompletedMessage'),
           ),
         ),
       );
@@ -271,11 +272,11 @@ class _WaterTrackerViewState
       context: context,
       builder: (dialogContext) {
         return AlertDialog(
-          title: const Text(
-            "Reset Today's Water?",
+          title: Text(
+            context.tr('resetTodayWaterTitle'),
           ),
-          content: const Text(
-            "Today's water progress will become zero.",
+          content: Text(
+            context.tr('resetTodayWaterMessage'),
           ),
           actions: [
             TextButton(
@@ -285,7 +286,7 @@ class _WaterTrackerViewState
                   false,
                 );
               },
-              child: const Text("Cancel"),
+              child: Text(context.tr('cancel')),
             ),
             ElevatedButton(
               onPressed: () {
@@ -294,7 +295,7 @@ class _WaterTrackerViewState
                   true,
                 );
               },
-              child: const Text("Reset"),
+              child: Text(context.tr('reset')),
             ),
           ],
         );
@@ -325,14 +326,14 @@ class _WaterTrackerViewState
               setDialogState,
               ) {
             return AlertDialog(
-              title: const Text(
-                "Set Daily Water Goal",
+              title: Text(
+                context.tr('setDailyWaterGoal'),
               ),
               content: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
-                    "$selectedGoal Glasses",
+                    "$selectedGoal ${context.tr('glasses')}",
                     style: TextStyle(
                       color: TColor.primary,
                       fontSize: 28,
@@ -380,7 +381,7 @@ class _WaterTrackerViewState
                   onPressed: () {
                     Navigator.pop(dialogContext);
                   },
-                  child: const Text("Cancel"),
+                  child: Text(context.tr('cancel')),
                 ),
                 ElevatedButton(
                   onPressed: () {
@@ -389,7 +390,7 @@ class _WaterTrackerViewState
                       selectedGoal,
                     );
                   },
-                  child: const Text("Save"),
+                  child: Text(context.tr('save')),
                 ),
               ],
             );
@@ -451,9 +452,9 @@ class _WaterTrackerViewState
           ),
         ),
 
-        title: const Text(
-          "Water Tracker",
-          style: TextStyle(
+        title: Text(
+          context.tr('waterTracker'),
+          style: const TextStyle(
             color: Colors.black,
             fontSize: 22,
             fontWeight: FontWeight.w800,
@@ -496,7 +497,7 @@ class _WaterTrackerViewState
                 child: _summaryCard(
                   icon:
                   Icons.water_drop_rounded,
-                  title: "Drunk",
+                  title: context.tr('drunk'),
                   value:
                   "$waterMilliliters ml",
                 ),
@@ -508,7 +509,7 @@ class _WaterTrackerViewState
                 child: _summaryCard(
                   icon:
                   Icons.flag_rounded,
-                  title: "Daily Goal",
+                  title: context.tr('dailyGoal'),
                   value:
                   "$goalMilliliters ml",
                 ),
@@ -522,7 +523,7 @@ class _WaterTrackerViewState
             children: [
               Expanded(
                 child: Text(
-                  "Today's Glasses",
+                  context.tr('todayGlasses'),
                   style: TextStyle(
                     color: TColor.primaryText,
                     fontSize: 21,
@@ -541,7 +542,7 @@ class _WaterTrackerViewState
                   size: 18,
                 ),
                 label: Text(
-                  "Edit Goal",
+                  context.tr('editGoal'),
                   style: TextStyle(
                     color: TColor.primary,
                     fontWeight:
@@ -569,8 +570,8 @@ class _WaterTrackerViewState
                     icon: const Icon(
                       Icons.remove_rounded,
                     ),
-                    label: const Text(
-                      "Remove",
+                    label: Text(
+                      context.tr('remove'),
                     ),
                     style:
                     OutlinedButton.styleFrom(
@@ -602,9 +603,9 @@ class _WaterTrackerViewState
                     icon: const Icon(
                       Icons.add_rounded,
                     ),
-                    label: const Text(
-                      "ADD 1 GLASS",
-                      style: TextStyle(
+                    label: Text(
+                      context.tr('addGlass'),
+                      style: const TextStyle(
                         fontWeight:
                         FontWeight.w800,
                       ),
@@ -633,7 +634,7 @@ class _WaterTrackerViewState
           const SizedBox(height: 28),
 
           Text(
-            "Water History",
+            context.tr('waterHistory'),
             style: TextStyle(
               color: TColor.primaryText,
               fontSize: 21,
@@ -648,7 +649,7 @@ class _WaterTrackerViewState
           const SizedBox(height: 28),
 
           Text(
-            "Weekly Statistics",
+            context.tr('weeklyStatistics'),
             style: TextStyle(
               color: TColor.primaryText,
               fontSize: 21,
@@ -699,16 +700,16 @@ class _WaterTrackerViewState
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
-                          "Water Reminder",
-                          style: TextStyle(
+                        Text(
+                          context.tr('waterReminder'),
+                          style: const TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w800,
                           ),
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          "Set water reminder time",
+                          context.tr('setWaterReminderTime'),
                           style: TextStyle(
                             color: TColor.sceondarText,
                             fontSize: 12,
@@ -797,9 +798,9 @@ class _WaterTrackerViewState
                       ),
                     ),
 
-                    const Text(
-                      "Glasses",
-                      style: TextStyle(
+                    Text(
+                      context.tr('glasses'),
+                      style: const TextStyle(
                         color: Colors.white70,
                         fontSize: 13,
                         fontWeight:
@@ -816,8 +817,8 @@ class _WaterTrackerViewState
 
           Text(
             waterCount >= dailyGoal
-                ? "Daily Goal Completed!"
-                : "Keep drinking water",
+                ? context.tr('dailyGoalCompleted')
+                : context.tr('keepDrinkingWater'),
             style: const TextStyle(
               color: Colors.white,
               fontSize: 20,
@@ -829,8 +830,8 @@ class _WaterTrackerViewState
 
           Text(
             waterCount >= dailyGoal
-                ? "Great job! You reached today's target."
-                : "${dailyGoal - waterCount} glasses remaining today.",
+                ? context.tr('reachedTodayTarget')
+                : "${dailyGoal - waterCount} ${context.tr('glassesRemainingToday')}",
             textAlign: TextAlign.center,
             style: TextStyle(
               color:
@@ -976,16 +977,16 @@ class _WaterTrackerViewState
               size: 42,
             ),
             const SizedBox(height: 10),
-            const Text(
-              "No Water History Yet",
-              style: TextStyle(
+            Text(
+              context.tr('noWaterHistoryYet'),
+              style: const TextStyle(
                 fontSize: 17,
                 fontWeight: FontWeight.w800,
               ),
             ),
             const SizedBox(height: 6),
             Text(
-              "Add water to start building your daily history.",
+              context.tr('addWaterToBuildHistory'),
               textAlign: TextAlign.center,
               style: TextStyle(
                 color: TColor.sceondarText,
@@ -1039,7 +1040,7 @@ class _WaterTrackerViewState
                     ),
                   ),
                   subtitle: Text(
-                    "${item.glasses} glasses",
+                    "${item.glasses} ${context.tr('glasses')}",
                     style: TextStyle(
                       color: TColor.sceondarText,
                       fontSize: 12,
@@ -1107,7 +1108,7 @@ class _WaterTrackerViewState
               Expanded(
                 child: _statRowItem(
                   icon: Icons.water_drop_rounded,
-                  title: "Total",
+                  title: context.tr('total'),
                   value:
                   "${(weeklyTotalMl / 1000).toStringAsFixed(1)} L",
                 ),
@@ -1116,7 +1117,7 @@ class _WaterTrackerViewState
               Expanded(
                 child: _statRowItem(
                   icon: Icons.calculate_rounded,
-                  title: "Average",
+                  title: context.tr('average'),
                   value: "$weeklyAverageMl ml",
                 ),
               ),
@@ -1128,7 +1129,7 @@ class _WaterTrackerViewState
               Expanded(
                 child: _statRowItem(
                   icon: Icons.emoji_events_rounded,
-                  title: "Best Day",
+                  title: context.tr('bestDay'),
                   value: bestDay,
                 ),
               ),
@@ -1136,8 +1137,8 @@ class _WaterTrackerViewState
               Expanded(
                 child: _statRowItem(
                   icon: Icons.local_fire_department_rounded,
-                  title: "Streak",
-                  value: "$currentStreak days",
+                  title: context.tr('streak'),
+                  value: "$currentStreak ${context.tr('days')}",
                 ),
               ),
             ],
@@ -1212,12 +1213,12 @@ class _WaterTrackerViewState
     );
 
     if (cleanDate == today) {
-      return "Today";
+      return context.tr('today');
     }
 
     if (cleanDate ==
         today.subtract(const Duration(days: 1))) {
-      return "Yesterday";
+      return context.tr('yesterday');
     }
 
     return _formatHistoryDate(savedDate);
@@ -1230,17 +1231,17 @@ class _WaterTrackerViewState
       return savedDate;
     }
 
-    const List<String> weekdays = [
-      "Monday",
-      "Tuesday",
-      "Wednesday",
-      "Thursday",
-      "Friday",
-      "Saturday",
-      "Sunday",
+    const List<String> weekdayKeys = [
+      "monday",
+      "tuesday",
+      "wednesday",
+      "thursday",
+      "friday",
+      "saturday",
+      "sunday",
     ];
 
-    return weekdays[date.weekday - 1];
+    return context.tr(weekdayKeys[date.weekday - 1]);
   }
 
 }

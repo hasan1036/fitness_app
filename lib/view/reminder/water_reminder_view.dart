@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../common/color_extention.dart';
+import '../../l10n/app_localizations.dart';
 import '../../service/notification_service.dart';
 
 class WaterReminderView extends StatefulWidget {
@@ -34,17 +35,23 @@ class _WaterReminderViewState
   bool isSaving = false;
 
   TimeOfDay startTime =
-      const TimeOfDay(hour: 8, minute: 0);
+  const TimeOfDay(hour: 8, minute: 0);
   TimeOfDay endTime =
-      const TimeOfDay(hour: 22, minute: 0);
+  const TimeOfDay(hour: 22, minute: 0);
   int intervalMinutes = 60;
 
-  final List<String> dayNames = const [
-    'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun',
+  final List<String> dayKeys = const [
+    'mondayShort',
+    'tuesdayShort',
+    'wednesdayShort',
+    'thursdayShort',
+    'fridayShort',
+    'saturdayShort',
+    'sundayShort',
   ];
 
   List<bool> selectedDays =
-      List<bool>.filled(7, true);
+  List<bool>.filled(7, true);
 
   @override
   void initState() {
@@ -54,7 +61,7 @@ class _WaterReminderViewState
 
   Future<void> _loadReminder() async {
     final SharedPreferences prefs =
-        await SharedPreferences.getInstance();
+    await SharedPreferences.getInstance();
 
     final List<String> savedDays =
         prefs.getStringList(_daysKey) ?? [];
@@ -64,21 +71,24 @@ class _WaterReminderViewState
     setState(() {
       reminderEnabled =
           prefs.getBool(_enabledKey) ?? false;
+
       startTime = TimeOfDay(
         hour: prefs.getInt(_startHourKey) ?? 8,
         minute: prefs.getInt(_startMinuteKey) ?? 0,
       );
+
       endTime = TimeOfDay(
         hour: prefs.getInt(_endHourKey) ?? 22,
         minute: prefs.getInt(_endMinuteKey) ?? 0,
       );
+
       intervalMinutes =
           prefs.getInt(_intervalKey) ?? 60;
 
       if (savedDays.isNotEmpty) {
         selectedDays = List<bool>.generate(
           7,
-          (index) => savedDays.contains(index.toString()),
+              (index) => savedDays.contains(index.toString()),
         );
       }
 
@@ -115,7 +125,9 @@ class _WaterReminderViewState
   Future<void> _saveReminder() async {
     if (reminderEnabled &&
         !selectedDays.contains(true)) {
-      _showMessage('Select at least one reminder day');
+      _showMessage(
+        context.tr('selectAtLeastOneDay'),
+      );
       return;
     }
 
@@ -125,7 +137,9 @@ class _WaterReminderViewState
         (endTime.hour * 60) + endTime.minute;
 
     if (reminderEnabled && endMinutes <= startMinutes) {
-      _showMessage('End time must be later than start time');
+      _showMessage(
+        context.tr('endTimeAfterStartTime'),
+      );
       return;
     }
 
@@ -135,7 +149,7 @@ class _WaterReminderViewState
 
     try {
       final SharedPreferences prefs =
-          await SharedPreferences.getInstance();
+      await SharedPreferences.getInstance();
 
       final List<String> savedIndexes = [];
       final List<int> selectedIndexes = [];
@@ -147,13 +161,40 @@ class _WaterReminderViewState
         }
       }
 
-      await prefs.setBool(_enabledKey, reminderEnabled);
-      await prefs.setInt(_startHourKey, startTime.hour);
-      await prefs.setInt(_startMinuteKey, startTime.minute);
-      await prefs.setInt(_endHourKey, endTime.hour);
-      await prefs.setInt(_endMinuteKey, endTime.minute);
-      await prefs.setInt(_intervalKey, intervalMinutes);
-      await prefs.setStringList(_daysKey, savedIndexes);
+      await prefs.setBool(
+        _enabledKey,
+        reminderEnabled,
+      );
+
+      await prefs.setInt(
+        _startHourKey,
+        startTime.hour,
+      );
+
+      await prefs.setInt(
+        _startMinuteKey,
+        startTime.minute,
+      );
+
+      await prefs.setInt(
+        _endHourKey,
+        endTime.hour,
+      );
+
+      await prefs.setInt(
+        _endMinuteKey,
+        endTime.minute,
+      );
+
+      await prefs.setInt(
+        _intervalKey,
+        intervalMinutes,
+      );
+
+      await prefs.setStringList(
+        _daysKey,
+        savedIndexes,
+      );
 
       if (reminderEnabled) {
         await NotificationService.scheduleWaterReminders(
@@ -172,12 +213,15 @@ class _WaterReminderViewState
 
       _showMessage(
         reminderEnabled
-            ? 'Water reminder scheduled'
-            : 'Water reminder turned off',
+            ? context.tr('waterReminderScheduled')
+            : context.tr('waterReminderTurnedOff'),
       );
     } catch (error) {
       if (!mounted) return;
-      _showMessage('Could not save reminder: $error');
+
+      _showMessage(
+        '${context.tr('couldNotSaveReminder')}: $error',
+      );
     } finally {
       if (mounted) {
         setState(() {
@@ -189,27 +233,53 @@ class _WaterReminderViewState
 
   void _showMessage(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
+      SnackBar(
+        content: Text(message),
+      ),
     );
+  }
+
+  String _intervalLabel(int minutes) {
+    if (minutes < 60) {
+      return '$minutes ${context.tr('minuteShort')}';
+    }
+
+    if (minutes == 60) {
+      return '1 ${context.tr('hour')}';
+    }
+
+    final int hours = minutes ~/ 60;
+    final int remainingMinutes = minutes % 60;
+
+    if (remainingMinutes == 0) {
+      return '$hours ${context.tr('hoursShort')}';
+    }
+
+    return '$hours ${context.tr('hoursShort')} '
+        '$remainingMinutes ${context.tr('minutesShort')}';
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xffF7F3FD),
+      backgroundColor:
+      const Color(0xffF7F3FD),
       appBar: AppBar(
-        backgroundColor: const Color(0xffF7F3FD),
+        backgroundColor:
+        const Color(0xffF7F3FD),
         elevation: 0,
         leading: IconButton(
-          onPressed: () => Navigator.pop(context),
+          onPressed: () {
+            Navigator.pop(context);
+          },
           icon: const Icon(
             Icons.arrow_back_rounded,
             color: Colors.black,
           ),
         ),
-        title: const Text(
-          'Water Reminder',
-          style: TextStyle(
+        title: Text(
+          context.tr('waterReminder'),
+          style: const TextStyle(
             color: Colors.black,
             fontSize: 22,
             fontWeight: FontWeight.w800,
@@ -218,183 +288,213 @@ class _WaterReminderViewState
       ),
       body: isLoading
           ? Center(
-              child: CircularProgressIndicator(
-                color: TColor.primary,
-              ),
-            )
+        child: CircularProgressIndicator(
+          color: TColor.primary,
+        ),
+      )
           : ListView(
-              padding: const EdgeInsets.fromLTRB(
-                20, 10, 20, 30,
+        padding:
+        const EdgeInsets.fromLTRB(
+          20,
+          10,
+          20,
+          30,
+        ),
+        children: [
+          _buildHeader(context),
+          const SizedBox(height: 22),
+          _settingCard(
+            child: SwitchListTile(
+              contentPadding:
+              EdgeInsets.zero,
+              value: reminderEnabled,
+              activeColor:
+              TColor.primary,
+              title: Text(
+                context.tr('enableReminder'),
+                style: const TextStyle(
+                  fontSize: 17,
+                  fontWeight:
+                  FontWeight.w800,
+                ),
               ),
-              children: [
-                _buildHeader(),
-                const SizedBox(height: 22),
-                _settingCard(
-                  child: SwitchListTile(
-                    contentPadding: EdgeInsets.zero,
-                    value: reminderEnabled,
-                    activeColor: TColor.primary,
-                    title: const Text(
-                      'Enable Reminder',
-                      style: TextStyle(
-                        fontSize: 17,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                    subtitle: Text(
-                      reminderEnabled
-                          ? 'Reminder is active'
-                          : 'Reminder is turned off',
-                      style: TextStyle(
-                        color: TColor.sceondarText,
-                      ),
-                    ),
-                    secondary: Icon(
-                      Icons.water_drop_rounded,
-                      color: reminderEnabled
-                          ? TColor.primary
-                          : Colors.grey,
-                    ),
-                    onChanged: (value) {
-                      setState(() {
-                        reminderEnabled = value;
-                      });
-                    },
-                  ),
+              subtitle: Text(
+                reminderEnabled
+                    ? context.tr('reminderActive')
+                    : context.tr('reminderTurnedOff'),
+                style: TextStyle(
+                  color:
+                  TColor.sceondarText,
                 ),
-                const SizedBox(height: 14),
-                _timeCard(
-                  title: 'Start Time',
-                  time: startTime,
-                  onTap: _pickStartTime,
-                ),
-                const SizedBox(height: 14),
-                _timeCard(
-                  title: 'End Time',
-                  time: endTime,
-                  onTap: _pickEndTime,
-                ),
-                const SizedBox(height: 22),
-                Text(
-                  'Reminder Interval',
-                  style: TextStyle(
-                    color: TColor.primaryText,
-                    fontSize: 20,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                Wrap(
-                  spacing: 10,
-                  runSpacing: 10,
-                  children: [30, 60, 90, 120].map((minutes) {
-                    return ChoiceChip(
-                      label: Text(
-                        minutes < 60
-                            ? '$minutes min'
-                            : minutes == 60
-                                ? '1 hour'
-                                : '${minutes ~/ 60}h ${minutes % 60 == 0 ? '' : '${minutes % 60}m'}',
-                      ),
-                      selected: intervalMinutes == minutes,
-                      selectedColor: TColor.primary,
-                      backgroundColor: Colors.white,
-                      labelStyle: TextStyle(
-                        color: intervalMinutes == minutes
-                            ? Colors.white
-                            : TColor.primaryText,
-                        fontWeight: FontWeight.w700,
-                      ),
-                      onSelected: reminderEnabled
-                          ? (_) {
-                              setState(() {
-                                intervalMinutes = minutes;
-                              });
-                            }
-                          : null,
-                    );
-                  }).toList(),
-                ),
-                const SizedBox(height: 22),
-                Text(
-                  'Repeat Days',
-                  style: TextStyle(
-                    color: TColor.primaryText,
-                    fontSize: 20,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                Wrap(
-                  spacing: 10,
-                  runSpacing: 10,
-                  children: List.generate(
-                    dayNames.length,
-                    (index) {
-                      final bool selected = selectedDays[index];
-                      return ChoiceChip(
-                        label: Text(dayNames[index]),
-                        selected: selected,
-                        selectedColor: TColor.primary,
-                        backgroundColor: Colors.white,
-                        labelStyle: TextStyle(
-                          color: selected
-                              ? Colors.white
-                              : reminderEnabled
-                                  ? TColor.primaryText
-                                  : Colors.grey,
-                          fontWeight: FontWeight.w700,
-                        ),
-                        onSelected: reminderEnabled
-                            ? (value) {
-                                setState(() {
-                                  selectedDays[index] = value;
-                                });
-                              }
-                            : null,
-                      );
-                    },
-                  ),
-                ),
-                const SizedBox(height: 28),
-                SizedBox(
-                  height: 58,
-                  child: ElevatedButton(
-                    onPressed: isSaving
-                        ? null
-                        : _saveReminder,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: TColor.primary,
-                      foregroundColor: Colors.white,
-                      elevation: 0,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                    ),
-                    child: isSaving
-                        ? const SizedBox(
-                            width: 24,
-                            height: 24,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2.5,
-                              color: Colors.white,
-                            ),
-                          )
-                        : const Text(
-                            'SAVE REMINDER',
-                            style: TextStyle(
-                              fontSize: 17,
-                              fontWeight: FontWeight.w800,
-                            ),
-                          ),
-                  ),
-                ),
-              ],
+              ),
+              secondary: Icon(
+                Icons.water_drop_rounded,
+                color: reminderEnabled
+                    ? TColor.primary
+                    : Colors.grey,
+              ),
+              onChanged: (value) {
+                setState(() {
+                  reminderEnabled = value;
+                });
+              },
             ),
+          ),
+          const SizedBox(height: 14),
+          _timeCard(
+            title: context.tr('startTime'),
+            time: startTime,
+            onTap: _pickStartTime,
+          ),
+          const SizedBox(height: 14),
+          _timeCard(
+            title: context.tr('endTime'),
+            time: endTime,
+            onTap: _pickEndTime,
+          ),
+          const SizedBox(height: 22),
+          Text(
+            context.tr('reminderInterval'),
+            style: TextStyle(
+              color: TColor.primaryText,
+              fontSize: 20,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            children: [30, 60, 90, 120]
+                .map((minutes) {
+              return ChoiceChip(
+                label: Text(
+                  _intervalLabel(minutes),
+                ),
+                selected:
+                intervalMinutes == minutes,
+                selectedColor:
+                TColor.primary,
+                backgroundColor:
+                Colors.white,
+                labelStyle: TextStyle(
+                  color: intervalMinutes == minutes
+                      ? Colors.white
+                      : TColor.primaryText,
+                  fontWeight:
+                  FontWeight.w700,
+                ),
+                onSelected:
+                reminderEnabled
+                    ? (_) {
+                  setState(() {
+                    intervalMinutes =
+                        minutes;
+                  });
+                }
+                    : null,
+              );
+            }).toList(),
+          ),
+          const SizedBox(height: 22),
+          Text(
+            context.tr('repeatDays'),
+            style: TextStyle(
+              color: TColor.primaryText,
+              fontSize: 20,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            children: List.generate(
+              dayKeys.length,
+                  (index) {
+                final bool selected =
+                selectedDays[index];
+
+                return ChoiceChip(
+                  label: Text(
+                    context.tr(dayKeys[index]),
+                  ),
+                  selected: selected,
+                  selectedColor:
+                  TColor.primary,
+                  backgroundColor:
+                  Colors.white,
+                  labelStyle: TextStyle(
+                    color: selected
+                        ? Colors.white
+                        : reminderEnabled
+                        ? TColor.primaryText
+                        : Colors.grey,
+                    fontWeight:
+                    FontWeight.w700,
+                  ),
+                  onSelected:
+                  reminderEnabled
+                      ? (value) {
+                    setState(() {
+                      selectedDays[index] =
+                          value;
+                    });
+                  }
+                      : null,
+                );
+              },
+            ),
+          ),
+          const SizedBox(height: 28),
+          SizedBox(
+            height: 58,
+            child: ElevatedButton(
+              onPressed:
+              isSaving
+                  ? null
+                  : _saveReminder,
+              style:
+              ElevatedButton.styleFrom(
+                backgroundColor:
+                TColor.primary,
+                foregroundColor:
+                Colors.white,
+                elevation: 0,
+                shape:
+                RoundedRectangleBorder(
+                  borderRadius:
+                  BorderRadius.circular(
+                    20,
+                  ),
+                ),
+              ),
+              child: isSaving
+                  ? const SizedBox(
+                width: 24,
+                height: 24,
+                child:
+                CircularProgressIndicator(
+                  strokeWidth: 2.5,
+                  color: Colors.white,
+                ),
+              )
+                  : Text(
+                context.tr('saveReminder'),
+                style: const TextStyle(
+                  fontSize: 17,
+                  fontWeight:
+                  FontWeight.w800,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
-  Widget _buildHeader() {
+  Widget _buildHeader(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(22),
       decoration: BoxDecoration(
@@ -406,7 +506,8 @@ class _WaterReminderViewState
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-        borderRadius: BorderRadius.circular(24),
+        borderRadius:
+        BorderRadius.circular(24),
       ),
       child: Row(
         children: [
@@ -414,7 +515,8 @@ class _WaterReminderViewState
             width: 66,
             height: 66,
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.16),
+              color:
+              Colors.white.withOpacity(0.16),
               shape: BoxShape.circle,
             ),
             child: const Icon(
@@ -426,21 +528,26 @@ class _WaterReminderViewState
           const SizedBox(width: 16),
           Expanded(
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              crossAxisAlignment:
+              CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'Stay Hydrated',
-                  style: TextStyle(
+                Text(
+                  context.tr('stayHydrated'),
+                  style: const TextStyle(
                     color: Colors.white,
                     fontSize: 20,
-                    fontWeight: FontWeight.w900,
+                    fontWeight:
+                    FontWeight.w900,
                   ),
                 ),
                 const SizedBox(height: 7),
                 Text(
-                  'Choose when and how often you want a water reminder.',
+                  context.tr('chooseWaterReminderSchedule'),
                   style: TextStyle(
-                    color: Colors.white.withOpacity(0.86),
+                    color:
+                    Colors.white.withOpacity(
+                      0.86,
+                    ),
                     fontSize: 13,
                     height: 1.4,
                   ),
@@ -460,7 +567,8 @@ class _WaterReminderViewState
   }) {
     return _settingCard(
       child: ListTile(
-        contentPadding: EdgeInsets.zero,
+        contentPadding:
+        EdgeInsets.zero,
         enabled: reminderEnabled,
         leading: Icon(
           Icons.access_time_filled_rounded,
@@ -489,12 +597,15 @@ class _WaterReminderViewState
               : Colors.grey,
           size: 17,
         ),
-        onTap: reminderEnabled ? onTap : null,
+        onTap:
+        reminderEnabled ? onTap : null,
       ),
     );
   }
 
-  Widget _settingCard({required Widget child}) {
+  Widget _settingCard({
+    required Widget child,
+  }) {
     return Container(
       padding: const EdgeInsets.symmetric(
         horizontal: 16,
@@ -502,7 +613,8 @@ class _WaterReminderViewState
       ),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius:
+        BorderRadius.circular(20),
         boxShadow: const [
           BoxShadow(
             color: Color(0x0D000000),

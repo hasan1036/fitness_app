@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../common/color_extention.dart';
 
+import '../../l10n/app_localizations.dart';
 class AboutView extends StatelessWidget {
   const AboutView({super.key});
 
@@ -16,8 +17,7 @@ class AboutView extends StatelessWidget {
           onPressed: () => Navigator.pop(context),
           icon: const Icon(Icons.arrow_back_rounded, color: Colors.black),
         ),
-        title: const Text(
-          'About',
+        title: Text(context.tr('about'),
           style: TextStyle(
             color: Colors.black,
             fontSize: 22,

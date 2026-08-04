@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../common/color_extention.dart';
 import '../reminder/meal_reminder_view.dart';
 
+import '../../l10n/app_localizations.dart';
 class MealPlanView extends StatefulWidget {
   const MealPlanView({super.key});
 
@@ -17,8 +18,8 @@ class _MealPlanViewState extends State<MealPlanView> {
 
   final List<Map<String, dynamic>> mealList = [
     {
-      "type": "Breakfast",
-      "title": "Oats, Banana & Eggs",
+      "typeKey": "breakfast",
+      "titleKey": "oatsBananaEggs",
       "time": "8:00 AM",
       "image": "assets/img/breakfast1.png",
       "calories": 420,
@@ -27,8 +28,8 @@ class _MealPlanViewState extends State<MealPlanView> {
       "fat": 14,
     },
     {
-      "type": "Morning Snack",
-      "title": "Apple & Greek Yogurt",
+      "typeKey": "morningSnack",
+      "titleKey": "appleGreekYogurt",
       "time": "11:00 AM",
       "image": "assets/img/breakfast2.png",
       "calories": 210,
@@ -37,8 +38,8 @@ class _MealPlanViewState extends State<MealPlanView> {
       "fat": 5,
     },
     {
-      "type": "Lunch",
-      "title": "Chicken, Rice & Salad",
+      "typeKey": "lunch",
+      "titleKey": "chickenRiceSalad",
       "time": "2:00 PM",
       "image": "assets/img/breakfast1.png",
       "calories": 560,
@@ -47,8 +48,8 @@ class _MealPlanViewState extends State<MealPlanView> {
       "fat": 15,
     },
     {
-      "type": "Dinner",
-      "title": "Fish, Vegetables & Soup",
+      "typeKey": "dinner",
+      "titleKey": "fishVegetablesSoup",
       "time": "8:00 PM",
       "image": "assets/img/breakfast2.png",
       "calories": 430,
@@ -127,9 +128,9 @@ class _MealPlanViewState extends State<MealPlanView> {
 
     if (completedMeals.length == mealList.length) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
+        SnackBar(
           content: Text(
-            "Great job! Today's meal plan is complete.",
+            context.tr('todayMealPlanComplete'),
           ),
         ),
       );
@@ -198,33 +199,33 @@ class _MealPlanViewState extends State<MealPlanView> {
   }
 
   String _formattedDate() {
-    const List<String> weekdays = [
-      "Monday",
-      "Tuesday",
-      "Wednesday",
-      "Thursday",
-      "Friday",
-      "Saturday",
-      "Sunday",
+    const List<String> weekdayKeys = [
+      "monday",
+      "tuesday",
+      "wednesday",
+      "thursday",
+      "friday",
+      "saturday",
+      "sunday",
     ];
 
-    const List<String> months = [
-      "Jan",
-      "Feb",
-      "Mar",
-      "Apr",
-      "May",
-      "Jun",
-      "Jul",
-      "Aug",
-      "Sep",
-      "Oct",
-      "Nov",
-      "Dec",
+    const List<String> monthKeys = [
+      "januaryShort",
+      "februaryShort",
+      "marchShort",
+      "aprilShort",
+      "mayShort",
+      "juneShort",
+      "julyShort",
+      "augustShort",
+      "septemberShort",
+      "octoberShort",
+      "novemberShort",
+      "decemberShort",
     ];
 
-    return "${weekdays[selectedDate.weekday - 1]}, "
-        "${months[selectedDate.month - 1]} "
+    return "${context.tr(weekdayKeys[selectedDate.weekday - 1])}, "
+        "${context.tr(monthKeys[selectedDate.month - 1])} "
         "${selectedDate.day}";
   }
 
@@ -292,7 +293,7 @@ class _MealPlanViewState extends State<MealPlanView> {
                 ),
                 const SizedBox(height: 18),
                 Text(
-                  meal["type"].toString(),
+                  context.tr(meal['typeKey'].toString()),
                   style: TextStyle(
                     color: TColor.primary,
                     fontSize: 14,
@@ -301,7 +302,9 @@ class _MealPlanViewState extends State<MealPlanView> {
                 ),
                 const SizedBox(height: 5),
                 Text(
-                  meal["title"].toString(),
+                  context.tr(meal['titleKey'].toString()),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                   style: TextStyle(
                     color: TColor.primaryText,
                     fontSize: 24,
@@ -310,7 +313,7 @@ class _MealPlanViewState extends State<MealPlanView> {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  "Recommended time: ${meal["time"]}",
+                  "${context.tr('recommendedTime')}: ${meal["time"]}",
                   style: TextStyle(
                     color: TColor.sceondarText,
                     fontSize: 13,
@@ -321,7 +324,7 @@ class _MealPlanViewState extends State<MealPlanView> {
                   children: [
                     Expanded(
                       child: _detailNutritionItem(
-                        title: "Calories",
+                        title: context.tr('calories'),
                         value:
                         "${meal["calories"]} kcal",
                       ),
@@ -329,21 +332,21 @@ class _MealPlanViewState extends State<MealPlanView> {
                     const SizedBox(width: 10),
                     Expanded(
                       child: _detailNutritionItem(
-                        title: "Protein",
+                        title: context.tr('protein'),
                         value: "${meal["protein"]} g",
                       ),
                     ),
                     const SizedBox(width: 10),
                     Expanded(
                       child: _detailNutritionItem(
-                        title: "Carbs",
+                        title: context.tr('carbs'),
                         value: "${meal["carbs"]} g",
                       ),
                     ),
                     const SizedBox(width: 10),
                     Expanded(
                       child: _detailNutritionItem(
-                        title: "Fat",
+                        title: context.tr('fat'),
                         value: "${meal["fat"]} g",
                       ),
                     ),
@@ -365,8 +368,8 @@ class _MealPlanViewState extends State<MealPlanView> {
                     ),
                     label: Text(
                       completed
-                          ? "MARK AS NOT EATEN"
-                          : "MARK AS EATEN",
+                          ? context.tr('markAsNotEaten')
+                          : context.tr('markAsEaten'),
                       style: const TextStyle(
                         fontWeight: FontWeight.w800,
                       ),
@@ -446,9 +449,9 @@ class _MealPlanViewState extends State<MealPlanView> {
             color: Colors.black,
           ),
         ),
-        title: const Text(
-          "Meal Plan",
-          style: TextStyle(
+        title: Text(
+          context.tr('mealPlan'),
+          style: const TextStyle(
             color: Colors.black,
             fontSize: 22,
             fontWeight: FontWeight.w800,
@@ -456,7 +459,7 @@ class _MealPlanViewState extends State<MealPlanView> {
         ),
         actions: [
           IconButton(
-            tooltip: "Meal reminders",
+            tooltip: context.tr('mealReminders'),
             onPressed: () {
               Navigator.push(
                 context,
@@ -498,8 +501,7 @@ class _MealPlanViewState extends State<MealPlanView> {
             Row(
               children: [
                 Expanded(
-                  child: Text(
-                    "Today's Meals",
+                  child: Text(context.tr('todayMeals'),
                     style: TextStyle(
                       color: TColor.primaryText,
                       fontSize: 22,
@@ -508,7 +510,7 @@ class _MealPlanViewState extends State<MealPlanView> {
                   ),
                 ),
                 Text(
-                  "${completedMeals.length}/${mealList.length} completed",
+                  "${completedMeals.length}/${mealList.length} ${context.tr('completed')}",
                   style: TextStyle(
                     color: TColor.primary,
                     fontSize: 12,
@@ -559,9 +561,11 @@ class _MealPlanViewState extends State<MealPlanView> {
                   crossAxisAlignment:
                   CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      "Healthy Daily Plan",
-                      style: TextStyle(
+                    Text(
+                      context.tr('healthyDailyPlan'),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
                         color: Colors.white,
                         fontSize: 23,
                         fontWeight: FontWeight.w900,
@@ -569,7 +573,7 @@ class _MealPlanViewState extends State<MealPlanView> {
                     ),
                     const SizedBox(height: 7),
                     Text(
-                      "Balanced meals to support your weight-loss journey.",
+                      context.tr('balancedMealsWeightLoss'),
                       style: TextStyle(
                         color:
                         Colors.white.withOpacity(0.86),
@@ -612,8 +616,8 @@ class _MealPlanViewState extends State<MealPlanView> {
           const SizedBox(height: 10),
           Text(
             completedMeals.length == mealList.length
-                ? "All meals completed today!"
-                : "${mealList.length - completedMeals.length} meals remaining",
+                ? context.tr('allMealsCompletedToday')
+                : "${mealList.length - completedMeals.length} ${context.tr('mealsRemaining')}",
             style: const TextStyle(
               color: Colors.white,
               fontSize: 13,
@@ -661,7 +665,7 @@ class _MealPlanViewState extends State<MealPlanView> {
                 ),
                 if (isToday)
                   Text(
-                    "Today",
+                    context.tr('today'),
                     style: TextStyle(
                       color: TColor.primary,
                       fontSize: 11,
@@ -695,7 +699,7 @@ class _MealPlanViewState extends State<MealPlanView> {
               child: _nutritionCard(
                 icon:
                 Icons.local_fire_department_rounded,
-                title: "Calories",
+                title: context.tr('calories'),
                 value: "$totalCalories",
                 suffix: "kcal",
               ),
@@ -704,7 +708,7 @@ class _MealPlanViewState extends State<MealPlanView> {
             Expanded(
               child: _nutritionCard(
                 icon: Icons.fitness_center_rounded,
-                title: "Protein",
+                title: context.tr('protein'),
                 value: "$totalProtein",
                 suffix: "g",
               ),
@@ -717,7 +721,7 @@ class _MealPlanViewState extends State<MealPlanView> {
             Expanded(
               child: _nutritionCard(
                 icon: Icons.grain_rounded,
-                title: "Carbs",
+                title: context.tr('carbs'),
                 value: "$totalCarbs",
                 suffix: "g",
               ),
@@ -726,7 +730,7 @@ class _MealPlanViewState extends State<MealPlanView> {
             Expanded(
               child: _nutritionCard(
                 icon: Icons.opacity_rounded,
-                title: "Fat",
+                title: context.tr('fat'),
                 value: "$totalFat",
                 suffix: "g",
               ),
@@ -762,9 +766,9 @@ class _MealPlanViewState extends State<MealPlanView> {
                   crossAxisAlignment:
                   CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      "Consumed Calories",
-                      style: TextStyle(
+                    Text(
+                      context.tr('consumedCalories'),
+                      style: const TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w700,
                       ),
@@ -932,7 +936,7 @@ class _MealPlanViewState extends State<MealPlanView> {
                       children: [
                         Expanded(
                           child: Text(
-                            meal["type"].toString(),
+                            context.tr(meal['typeKey'].toString()),
                             style: TextStyle(
                               color: TColor.primary,
                               fontSize: 12,
@@ -954,7 +958,7 @@ class _MealPlanViewState extends State<MealPlanView> {
                     ),
                     const SizedBox(height: 6),
                     Text(
-                      meal["title"].toString(),
+                      context.tr(meal['titleKey'].toString()),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
@@ -966,7 +970,7 @@ class _MealPlanViewState extends State<MealPlanView> {
                     const SizedBox(height: 9),
                     Text(
                       "${meal["calories"]} kcal • "
-                          "${meal["protein"]}g protein",
+                          "${meal["protein"]}g ${context.tr('protein').toLowerCase()}",
                       style: TextStyle(
                         color: TColor.sceondarText,
                         fontSize: 11,
@@ -978,8 +982,8 @@ class _MealPlanViewState extends State<MealPlanView> {
                         Expanded(
                           child: Text(
                             completed
-                                ? "Completed"
-                                : "Tap to view details",
+                                ? context.tr('completed')
+                                : context.tr('tapToViewDetails'),
                             style: TextStyle(
                               color: completed
                                   ? Colors.green
@@ -992,8 +996,8 @@ class _MealPlanViewState extends State<MealPlanView> {
                         ),
                         IconButton(
                           tooltip: completed
-                              ? "Mark as not eaten"
-                              : "Mark as eaten",
+                              ? context.tr('markAsNotEaten')
+                              : context.tr('markAsEaten'),
                           onPressed: () {
                             _toggleMeal(index);
                           },
@@ -1056,16 +1060,16 @@ class _MealPlanViewState extends State<MealPlanView> {
                 crossAxisAlignment:
                 CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    "Meal Reminder",
-                    style: TextStyle(
+                  Text(
+                    context.tr('mealReminder'),
+                    style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w800,
                     ),
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    "Open Schedule & Reminders",
+                    context.tr('openScheduleReminders'),
                     style: TextStyle(
                       color: TColor.sceondarText,
                       fontSize: 12,

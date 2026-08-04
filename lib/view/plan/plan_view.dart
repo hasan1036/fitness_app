@@ -4,10 +4,11 @@ import '../../common/color_extention.dart';
 import '../../data/workout_day_view.dart';
 import '../../reports/reports_view.dart';
 import '../../service/user_profile_service.dart';
-import '../home/home_view.dart';
+import '../../service/weight_unit_service.dart';
 import '../menu/menu_view.dart';
 import '../profile/me_view.dart';
 
+import '../../l10n/app_localizations.dart';
 class PlanView extends StatefulWidget {
   const PlanView({super.key});
 
@@ -18,71 +19,76 @@ class PlanView extends StatefulWidget {
 class _PlanViewState extends State<PlanView> {
   bool isLoading = true;
   UserProfileData? profile;
+  String weightUnit = WeightUnitService.kilograms;
 
   final List<Map<String, dynamic>> planCategories = const [
     {
-      "title": "Fat Burn",
-      "subtitle": "Beginner • 15 min",
+      "titleKey": "fatBurn",
+      "levelKey": "beginner",
+      "minutes": 15,
       "icon": Icons.local_fire_department_rounded,
     },
     {
-      "title": "Full Body",
-      "subtitle": "Intermediate • 20 min",
+      "titleKey": "fullBody",
+      "levelKey": "intermediate",
+      "minutes": 20,
       "icon": Icons.fitness_center_rounded,
     },
     {
-      "title": "HIIT",
-      "subtitle": "Advanced • 12 min",
+      "titleKey": "hiit",
+      "levelKey": "advanced",
+      "minutes": 12,
       "icon": Icons.bolt_rounded,
     },
     {
-      "title": "Stretch",
-      "subtitle": "Recovery • 10 min",
+      "titleKey": "stretch",
+      "levelKey": "recovery",
+      "minutes": 10,
       "icon": Icons.self_improvement_rounded,
     },
   ];
 
   final List<Map<String, dynamic>> weeklyPlan = const [
     {
-      "day": "Mon",
-      "title": "Full Body",
-      "status": "Completed",
+      "dayKey": "mondayShort",
+      "titleKey": "fullBody",
+      "statusKey": "completed",
       "icon": Icons.check_rounded,
     },
     {
-      "day": "Tue",
-      "title": "Leg & Glutes",
-      "status": "Today",
+      "dayKey": "tuesdayShort",
+      "titleKey": "legsGlutes",
+      "statusKey": "today",
       "icon": Icons.play_arrow_rounded,
     },
     {
-      "day": "Wed",
-      "title": "Recovery",
-      "status": "Rest",
+      "dayKey": "wednesdayShort",
+      "titleKey": "recovery",
+      "statusKey": "rest",
       "icon": Icons.spa_rounded,
     },
     {
-      "day": "Thu",
-      "title": "Core",
-      "status": "Upcoming",
+      "dayKey": "thursdayShort",
+      "titleKey": "core",
+      "statusKey": "upcoming",
       "icon": Icons.schedule_rounded,
     },
     {
-      "day": "Fri",
-      "title": "Upper Body",
-      "status": "Upcoming",
+      "dayKey": "fridayShort",
+      "titleKey": "upperBody",
+      "statusKey": "upcoming",
       "icon": Icons.schedule_rounded,
     },
     {
-      "day": "Sat",
-      "title": "Cardio",
-      "status": "Upcoming",
+      "dayKey": "saturdayShort",
+      "titleKey": "cardio",
+      "statusKey": "upcoming",
       "icon": Icons.schedule_rounded,
     },
     {
-      "day": "Sun",
-      "title": "Recovery",
-      "status": "Rest",
+      "dayKey": "sundayShort",
+      "titleKey": "recovery",
+      "statusKey": "rest",
       "icon": Icons.spa_rounded,
     },
   ];
@@ -95,12 +101,14 @@ class _PlanViewState extends State<PlanView> {
 
   Future<void> _loadProfile() async {
     final UserProfileData value =
-        await UserProfileService.getProfile();
+    await UserProfileService.getProfile();
+    final String unit = await WeightUnitService.getUnit();
 
     if (!mounted) return;
 
     setState(() {
       profile = value;
+      weightUnit = unit;
       isLoading = false;
     });
   }
@@ -108,11 +116,11 @@ class _PlanViewState extends State<PlanView> {
   String _goalTitle(UserProfileData data) {
     switch (data.goalType) {
       case "gain_weight":
-        return "Build Muscle Plan";
+        return context.tr("buildMusclePlan");
       case "maintain_weight":
-        return "Stay Fit Plan";
+        return context.tr("stayFitPlan");
       default:
-        return "Lose Weight Plan";
+        return context.tr("loseWeightPlan");
     }
   }
 
@@ -120,16 +128,16 @@ class _PlanViewState extends State<PlanView> {
   Widget build(BuildContext context) {
     final UserProfileData data =
         profile ??
-        const UserProfileData(
-          startWeight: 0,
-          currentWeight: 0,
-          targetWeight: 0,
-          heightCm: 0,
-          age: 0,
-          gender: "",
-          goalType: "lose_weight",
-          profileCompleted: false,
-        );
+            const UserProfileData(
+              startWeight: 0,
+              currentWeight: 0,
+              targetWeight: 0,
+              heightCm: 0,
+              age: 0,
+              gender: "",
+              goalType: "lose_weight",
+              profileCompleted: false,
+            );
 
     return Scaffold(
       backgroundColor: const Color(0xffF7F3FD),
@@ -137,9 +145,9 @@ class _PlanViewState extends State<PlanView> {
         automaticallyImplyLeading: false,
         backgroundColor: const Color(0xffF7F3FD),
         elevation: 0,
-        title: const Text(
-          "My Plan",
-          style: TextStyle(
+        title: Text(
+          context.tr('myPlan'),
+          style: const TextStyle(
             color: Colors.black,
             fontSize: 23,
             fontWeight: FontWeight.w900,
@@ -157,56 +165,56 @@ class _PlanViewState extends State<PlanView> {
       ),
       body: isLoading
           ? Center(
-              child: CircularProgressIndicator(
-                color: TColor.primary,
-              ),
-            )
+        child: CircularProgressIndicator(
+          color: TColor.primary,
+        ),
+      )
           : ListView(
-              padding: const EdgeInsets.fromLTRB(
-                18,
-                6,
-                18,
-                26,
-              ),
-              children: [
-                _activePlanCard(data),
-                const SizedBox(height: 22),
-                _sectionTitle(
-                  "Choose Your Focus",
-                  "View all",
-                ),
-                const SizedBox(height: 12),
-                SizedBox(
-                  height: 128,
-                  child: ListView.separated(
-                    scrollDirection: Axis.horizontal,
-                    itemCount: planCategories.length,
-                    separatorBuilder: (_, __) =>
-                        const SizedBox(width: 12),
-                    itemBuilder: (context, index) {
-                      return _categoryCard(
-                        planCategories[index],
-                      );
-                    },
-                  ),
-                ),
-                const SizedBox(height: 24),
-                _sectionTitle(
-                  "This Week",
-                  "7 days",
-                ),
-                const SizedBox(height: 12),
-                ...List.generate(
-                  weeklyPlan.length,
-                  (index) => _weeklyTile(
-                    weeklyPlan[index],
-                    index,
-                  ),
-                ),
-                const SizedBox(height: 22),
-                _goalCard(data),
-              ],
+        padding: const EdgeInsets.fromLTRB(
+          18,
+          6,
+          18,
+          26,
+        ),
+        children: [
+          _activePlanCard(data),
+          const SizedBox(height: 22),
+          _sectionTitle(
+            context.tr("chooseFocus"),
+            context.tr("viewAll"),
+          ),
+          const SizedBox(height: 12),
+          SizedBox(
+            height: 128,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              itemCount: planCategories.length,
+              separatorBuilder: (_, __) =>
+              const SizedBox(width: 12),
+              itemBuilder: (context, index) {
+                return _categoryCard(
+                  planCategories[index],
+                );
+              },
             ),
+          ),
+          const SizedBox(height: 24),
+          _sectionTitle(
+            context.tr("thisWeek"),
+            "7 ${context.tr("days")}",
+          ),
+          const SizedBox(height: 12),
+          ...List.generate(
+            weeklyPlan.length,
+                (index) => _weeklyTile(
+              weeklyPlan[index],
+              index,
+            ),
+          ),
+          const SizedBox(height: 22),
+          _goalCard(data),
+        ],
+      ),
       bottomNavigationBar: _buildBottomBar(),
     );
   }
@@ -232,7 +240,7 @@ class _PlanViewState extends State<PlanView> {
       ),
       child: Column(
         crossAxisAlignment:
-            CrossAxisAlignment.start,
+        CrossAxisAlignment.start,
         children: [
           Row(
             children: [
@@ -244,10 +252,9 @@ class _PlanViewState extends State<PlanView> {
                 decoration: BoxDecoration(
                   color: Colors.white.withOpacity(0.17),
                   borderRadius:
-                      BorderRadius.circular(20),
+                  BorderRadius.circular(20),
                 ),
-                child: const Text(
-                  "ACTIVE PLAN",
+                child: Text(context.tr('activePlan'),
                   style: TextStyle(
                     color: Colors.white,
                     fontSize: 11,
@@ -273,7 +280,8 @@ class _PlanViewState extends State<PlanView> {
           ),
           const SizedBox(height: 6),
           Text(
-            "Day $completedDays of $totalDays • Beginner",
+            "${context.tr("day")} $completedDays ${context.tr("of")} "
+                "$totalDays • ${context.tr("beginner")}",
             style: TextStyle(
               color: Colors.white.withOpacity(0.85),
               fontSize: 13,
@@ -287,26 +295,26 @@ class _PlanViewState extends State<PlanView> {
               minHeight: 9,
               backgroundColor: Colors.white24,
               valueColor:
-                  AlwaysStoppedAnimation<Color>(
+              AlwaysStoppedAnimation<Color>(
                 Colors.white,
               ),
             ),
           ),
           const SizedBox(height: 9),
-          const Row(
+          Row(
             children: [
               Text(
-                "3% completed",
-                style: TextStyle(
+                "3% ${context.tr("completed")}",
+                style: const TextStyle(
                   color: Colors.white,
                   fontSize: 12,
                   fontWeight: FontWeight.w700,
                 ),
               ),
-              Spacer(),
+              const Spacer(),
               Text(
-                "29 days remaining",
-                style: TextStyle(
+                "29 ${context.tr("daysRemaining")}",
+                style: const TextStyle(
                   color: Colors.white70,
                   fontSize: 11,
                 ),
@@ -323,7 +331,7 @@ class _PlanViewState extends State<PlanView> {
                   context,
                   MaterialPageRoute(
                     builder: (_) =>
-                        const WorkoutDayView(
+                    const WorkoutDayView(
                       dayNumber: 1,
                     ),
                   ),
@@ -332,8 +340,7 @@ class _PlanViewState extends State<PlanView> {
               icon: const Icon(
                 Icons.play_arrow_rounded,
               ),
-              label: const Text(
-                "CONTINUE TODAY'S WORKOUT",
+              label: Text(context.tr('continueWorkout'),
                 style: TextStyle(
                   fontWeight: FontWeight.w900,
                 ),
@@ -344,7 +351,7 @@ class _PlanViewState extends State<PlanView> {
                 elevation: 0,
                 shape: RoundedRectangleBorder(
                   borderRadius:
-                      BorderRadius.circular(17),
+                  BorderRadius.circular(17),
                 ),
               ),
             ),
@@ -355,9 +362,9 @@ class _PlanViewState extends State<PlanView> {
   }
 
   Widget _sectionTitle(
-    String title,
-    String action,
-  ) {
+      String title,
+      String action,
+      ) {
     return Row(
       children: [
         Expanded(
@@ -383,8 +390,8 @@ class _PlanViewState extends State<PlanView> {
   }
 
   Widget _categoryCard(
-    Map<String, dynamic> item,
-  ) {
+      Map<String, dynamic> item,
+      ) {
     return Container(
       width: 155,
       padding: const EdgeInsets.all(16),
@@ -401,7 +408,7 @@ class _PlanViewState extends State<PlanView> {
       ),
       child: Column(
         crossAxisAlignment:
-            CrossAxisAlignment.start,
+        CrossAxisAlignment.start,
         children: [
           Container(
             width: 43,
@@ -409,7 +416,7 @@ class _PlanViewState extends State<PlanView> {
             decoration: BoxDecoration(
               color: TColor.primaryLight,
               borderRadius:
-                  BorderRadius.circular(14),
+              BorderRadius.circular(14),
             ),
             child: Icon(
               item["icon"] as IconData,
@@ -418,7 +425,7 @@ class _PlanViewState extends State<PlanView> {
           ),
           const Spacer(),
           Text(
-            item["title"].toString(),
+            context.tr(item["titleKey"].toString()),
             style: TextStyle(
               color: TColor.primaryText,
               fontSize: 15,
@@ -427,7 +434,8 @@ class _PlanViewState extends State<PlanView> {
           ),
           const SizedBox(height: 4),
           Text(
-            item["subtitle"].toString(),
+            "${context.tr(item["levelKey"].toString())} • "
+                "${item["minutes"]} ${context.tr("minuteShort")}",
             style: TextStyle(
               color: TColor.sceondarText,
               fontSize: 10,
@@ -439,13 +447,13 @@ class _PlanViewState extends State<PlanView> {
   }
 
   Widget _weeklyTile(
-    Map<String, dynamic> item,
-    int index,
-  ) {
+      Map<String, dynamic> item,
+      int index,
+      ) {
     final bool isToday =
-        item["status"] == "Today";
+        item["statusKey"] == "today";
     final bool completed =
-        item["status"] == "Completed";
+        item["statusKey"] == "completed";
 
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
@@ -463,16 +471,16 @@ class _PlanViewState extends State<PlanView> {
       child: ListTile(
         onTap: isToday
             ? () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) =>
-                        const WorkoutDayView(
-                      dayNumber: 1,
-                    ),
-                  ),
-                );
-              }
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) =>
+              const WorkoutDayView(
+                dayNumber: 1,
+              ),
+            ),
+          );
+        }
             : null,
         contentPadding: const EdgeInsets.symmetric(
           horizontal: 15,
@@ -487,10 +495,10 @@ class _PlanViewState extends State<PlanView> {
                 ? TColor.primary
                 : TColor.primaryLight,
             borderRadius:
-                BorderRadius.circular(14),
+            BorderRadius.circular(14),
           ),
           child: Text(
-            item["day"].toString(),
+            context.tr(item["dayKey"].toString()),
             style: TextStyle(
               color: isToday
                   ? Colors.white
@@ -501,20 +509,20 @@ class _PlanViewState extends State<PlanView> {
           ),
         ),
         title: Text(
-          item["title"].toString(),
+          context.tr(item["titleKey"].toString()),
           style: const TextStyle(
             fontSize: 15,
             fontWeight: FontWeight.w800,
           ),
         ),
         subtitle: Text(
-          item["status"].toString(),
+          context.tr(item["statusKey"].toString()),
           style: TextStyle(
             color: completed
                 ? Colors.green
                 : isToday
-                    ? TColor.primary
-                    : TColor.sceondarText,
+                ? TColor.primary
+                : TColor.sceondarText,
             fontSize: 11,
             fontWeight: FontWeight.w700,
           ),
@@ -542,14 +550,14 @@ class _PlanViewState extends State<PlanView> {
 
   Widget _goalCard(UserProfileData data) {
     final String current =
-        data.currentWeight > 0
-            ? "${data.currentWeight.toStringAsFixed(1)} kg"
-            : "-- kg";
+    data.currentWeight > 0
+        ? WeightUnitService.formatKg(data.currentWeight, weightUnit)
+        : "-- ${WeightUnitService.label(weightUnit)}";
 
     final String target =
-        data.targetWeight > 0
-            ? "${data.targetWeight.toStringAsFixed(1)} kg"
-            : "-- kg";
+    data.targetWeight > 0
+        ? WeightUnitService.formatKg(data.targetWeight, weightUnit)
+        : "-- ${WeightUnitService.label(weightUnit)}";
 
     return Container(
       padding: const EdgeInsets.all(19),
@@ -559,10 +567,9 @@ class _PlanViewState extends State<PlanView> {
       ),
       child: Column(
         crossAxisAlignment:
-            CrossAxisAlignment.start,
+        CrossAxisAlignment.start,
         children: [
-          const Text(
-            "My Goal",
+          Text(context.tr('myGoal'),
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w900,
@@ -573,19 +580,19 @@ class _PlanViewState extends State<PlanView> {
             children: [
               Expanded(
                 child: _goalItem(
-                  "Current",
+                  context.tr("current"),
                   current,
                 ),
               ),
               Expanded(
                 child: _goalItem(
-                  "Target",
+                  context.tr("target"),
                   target,
                 ),
               ),
               Expanded(
                 child: _goalItem(
-                  "Progress",
+                  context.tr("progress"),
                   "${(data.goalProgress * 100).round()}%",
                 ),
               ),
@@ -597,9 +604,9 @@ class _PlanViewState extends State<PlanView> {
   }
 
   Widget _goalItem(
-    String title,
-    String value,
-  ) {
+      String title,
+      String value,
+      ) {
     return Column(
       children: [
         Text(
@@ -642,48 +649,48 @@ class _PlanViewState extends State<PlanView> {
         top: false,
         child: Row(
           mainAxisAlignment:
-              MainAxisAlignment.spaceAround,
+          MainAxisAlignment.spaceAround,
           children: [
             _bottomItem(
               Icons.home_rounded,
-              "Home",
+              context.tr("home"),
               false,
-              () {
+                  () {
                 Navigator.pushAndRemoveUntil(
                   context,
                   MaterialPageRoute(
                     builder: (_) =>
-                        const MenuView(),
+                    const MenuView(),
                   ),
-                  (route) => false,
+                      (route) => false,
                 );
               },
             ),
             _bottomItem(
               Icons.assignment_rounded,
-              "Plan",
+              context.tr("plan"),
               true,
-              () {},
+                  () {},
             ),
             _bottomItem(
               Icons.bar_chart_rounded,
-              "Reports",
+              context.tr("reports"),
               false,
-              () {
+                  () {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
                     builder: (_) =>
-                        const ReportsView(),
+                    const ReportsView(),
                   ),
                 );
               },
             ),
             _bottomItem(
               Icons.person_outline_rounded,
-              "Me",
+              context.tr("me"),
               false,
-              () {
+                  () {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
@@ -699,17 +706,17 @@ class _PlanViewState extends State<PlanView> {
   }
 
   Widget _bottomItem(
-    IconData icon,
-    String title,
-    bool active,
-    VoidCallback onTap,
-  ) {
+      IconData icon,
+      String title,
+      bool active,
+      VoidCallback onTap,
+      ) {
     return Expanded(
       child: InkWell(
         onTap: onTap,
         child: Column(
           mainAxisAlignment:
-              MainAxisAlignment.center,
+          MainAxisAlignment.center,
           children: [
             Icon(
               icon,
@@ -739,7 +746,7 @@ class _PlanViewState extends State<PlanView> {
                 decoration: BoxDecoration(
                   color: TColor.primary,
                   borderRadius:
-                      BorderRadius.circular(4),
+                  BorderRadius.circular(4),
                 ),
               ),
           ],

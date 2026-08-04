@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../common/color_extention.dart';
+import '../../l10n/app_localizations.dart';
 import '../../service/notification_service.dart';
 
 class WorkoutReminderView extends StatefulWidget {
@@ -15,16 +16,13 @@ class WorkoutReminderView extends StatefulWidget {
 class _WorkoutReminderViewState
     extends State<WorkoutReminderView> {
   static const String _enabledKey =
-      "workout_reminder_enabled";
-
+      'workout_reminder_enabled';
   static const String _hourKey =
-      "workout_reminder_hour";
-
+      'workout_reminder_hour';
   static const String _minuteKey =
-      "workout_reminder_minute";
-
+      'workout_reminder_minute';
   static const String _daysKey =
-      "workout_reminder_days";
+      'workout_reminder_days';
 
   bool reminderEnabled = false;
   bool isLoading = true;
@@ -33,14 +31,14 @@ class _WorkoutReminderViewState
   TimeOfDay selectedTime =
   const TimeOfDay(hour: 19, minute: 0);
 
-  final List<String> dayNames = const [
-    "Mon",
-    "Tue",
-    "Wed",
-    "Thu",
-    "Fri",
-    "Sat",
-    "Sun",
+  final List<String> dayKeys = const [
+    'mondayShort',
+    'tuesdayShort',
+    'wednesdayShort',
+    'thursdayShort',
+    'fridayShort',
+    'saturdayShort',
+    'sundayShort',
   ];
 
   List<bool> selectedDays =
@@ -101,9 +99,9 @@ class _WorkoutReminderViewState
     if (reminderEnabled &&
         !selectedDays.contains(true)) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
+        SnackBar(
           content: Text(
-            "Select at least one reminder day",
+            context.tr('selectAtLeastOneDay'),
           ),
         ),
       );
@@ -164,8 +162,8 @@ class _WorkoutReminderViewState
         SnackBar(
           content: Text(
             reminderEnabled
-                ? "Workout reminder scheduled"
-                : "Workout reminder turned off",
+                ? context.tr('workoutReminderScheduled')
+                : context.tr('workoutReminderTurnedOff'),
           ),
         ),
       );
@@ -175,7 +173,7 @@ class _WorkoutReminderViewState
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            "Could not schedule reminder: $error",
+            '${context.tr('couldNotScheduleReminder')}: $error',
           ),
         ),
       );
@@ -197,12 +195,10 @@ class _WorkoutReminderViewState
     return Scaffold(
       backgroundColor:
       const Color(0xffF7F3FD),
-
       appBar: AppBar(
         backgroundColor:
         const Color(0xffF7F3FD),
         elevation: 0,
-
         leading: IconButton(
           onPressed: () {
             Navigator.pop(context);
@@ -212,17 +208,15 @@ class _WorkoutReminderViewState
             color: Colors.black,
           ),
         ),
-
-        title: const Text(
-          "Workout Reminder",
-          style: TextStyle(
+        title: Text(
+          context.tr('workoutReminder'),
+          style: const TextStyle(
             color: Colors.black,
             fontSize: 22,
             fontWeight: FontWeight.w800,
           ),
         ),
       ),
-
       body: isLoading
           ? Center(
         child: CircularProgressIndicator(
@@ -238,10 +232,8 @@ class _WorkoutReminderViewState
           30,
         ),
         children: [
-          _buildHeader(),
-
+          _buildHeader(context),
           const SizedBox(height: 22),
-
           _settingCard(
             child: SwitchListTile(
               contentPadding:
@@ -249,9 +241,9 @@ class _WorkoutReminderViewState
               value: reminderEnabled,
               activeColor:
               TColor.primary,
-              title: const Text(
-                "Enable Reminder",
-                style: TextStyle(
+              title: Text(
+                context.tr('enableReminder'),
+                style: const TextStyle(
                   fontSize: 17,
                   fontWeight:
                   FontWeight.w800,
@@ -259,8 +251,8 @@ class _WorkoutReminderViewState
               ),
               subtitle: Text(
                 reminderEnabled
-                    ? "Reminder is active"
-                    : "Reminder is turned off",
+                    ? context.tr('reminderActive')
+                    : context.tr('reminderTurnedOff'),
                 style: TextStyle(
                   color:
                   TColor.sceondarText,
@@ -280,9 +272,7 @@ class _WorkoutReminderViewState
               },
             ),
           ),
-
           const SizedBox(height: 14),
-
           _settingCard(
             child: ListTile(
               contentPadding:
@@ -294,9 +284,9 @@ class _WorkoutReminderViewState
                     ? TColor.primary
                     : Colors.grey,
               ),
-              title: const Text(
-                "Reminder Time",
-                style: TextStyle(
+              title: Text(
+                context.tr('reminderTime'),
+                style: const TextStyle(
                   fontSize: 16,
                   fontWeight:
                   FontWeight.w800,
@@ -322,32 +312,28 @@ class _WorkoutReminderViewState
                   : null,
             ),
           ),
-
           const SizedBox(height: 22),
-
           Text(
-            "Repeat Days",
+            context.tr('repeatDays'),
             style: TextStyle(
               color: TColor.primaryText,
               fontSize: 20,
               fontWeight: FontWeight.w800,
             ),
           ),
-
           const SizedBox(height: 12),
-
           Wrap(
             spacing: 10,
             runSpacing: 10,
             children: List.generate(
-              dayNames.length,
+              dayKeys.length,
                   (index) {
                 final bool selected =
                 selectedDays[index];
 
                 return ChoiceChip(
                   label: Text(
-                    dayNames[index],
+                    context.tr(dayKeys[index]),
                   ),
                   selected: selected,
                   selectedColor:
@@ -369,8 +355,7 @@ class _WorkoutReminderViewState
                   reminderEnabled
                       ? (value) {
                     setState(() {
-                      selectedDays[
-                      index] =
+                      selectedDays[index] =
                           value;
                     });
                   }
@@ -379,9 +364,7 @@ class _WorkoutReminderViewState
               },
             ),
           ),
-
           const SizedBox(height: 28),
-
           SizedBox(
             height: 58,
             child: ElevatedButton(
@@ -414,9 +397,9 @@ class _WorkoutReminderViewState
                   color: Colors.white,
                 ),
               )
-                  : const Text(
-                "SAVE REMINDER",
-                style: TextStyle(
+                  : Text(
+                context.tr('saveReminder'),
+                style: const TextStyle(
                   fontSize: 17,
                   fontWeight:
                   FontWeight.w800,
@@ -429,7 +412,7 @@ class _WorkoutReminderViewState
     );
   }
 
-  Widget _buildHeader() {
+  Widget _buildHeader(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(22),
       decoration: BoxDecoration(
@@ -460,28 +443,24 @@ class _WorkoutReminderViewState
               size: 34,
             ),
           ),
-
           const SizedBox(width: 16),
-
           Expanded(
             child: Column(
               crossAxisAlignment:
               CrossAxisAlignment.start,
               children: [
-                const Text(
-                  "Never Miss a Workout",
-                  style: TextStyle(
+                Text(
+                  context.tr('neverMissWorkout'),
+                  style: const TextStyle(
                     color: Colors.white,
                     fontSize: 20,
                     fontWeight:
                     FontWeight.w900,
                   ),
                 ),
-
                 const SizedBox(height: 7),
-
                 Text(
-                  "Choose a time and the days you want to exercise.",
+                  context.tr('chooseWorkoutTimeDays'),
                   style: TextStyle(
                     color:
                     Colors.white.withOpacity(

@@ -1,7 +1,9 @@
 import 'dart:io';
+import 'dart:ui' as ui;
 
 import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:intl/intl.dart';
 
 import '../../reports/reports_view.dart';
 import '../../service/profile_service.dart';
@@ -24,6 +26,7 @@ import '../../common_widget/app_drawer.dart';
 
 
 
+import '../../l10n/app_localizations.dart';
 class MenuView extends StatefulWidget {
   const MenuView({super.key});
 
@@ -36,47 +39,18 @@ class _MenuViewState extends State<MenuView> {
   GlobalKey<ScaffoldState>();
 
   String get greeting {
-    final hour = DateTime.now().hour;
+    final int hour = DateTime.now().hour;
 
-    if (hour < 12) {
-      return "Good Morning 👋";
-    } else if (hour < 17) {
-      return "Good Afternoon ☀️";
-    } else if (hour < 21) {
-      return "Good Evening 🌇";
-    } else {
-      return "Good Night 🌙";
-    }
+    if (hour < 12) return context.tr('goodMorning');
+    if (hour < 17) return context.tr('goodAfternoon');
+    if (hour < 21) return context.tr('goodEvening');
+    return context.tr('goodNight');
   }
+
   String get currentDate {
-    final now = DateTime.now();
-
-    const weekdays = [
-      "Monday",
-      "Tuesday",
-      "Wednesday",
-      "Thursday",
-      "Friday",
-      "Saturday",
-      "Sunday",
-    ];
-
-    const months = [
-      "January",
-      "February",
-      "March",
-      "April",
-      "May",
-      "June",
-      "July",
-      "August",
-      "September",
-      "October",
-      "November",
-      "December",
-    ];
-
-    return "${weekdays[now.weekday - 1]}, ${months[now.month - 1]} ${now.day}";
+    final Locale locale = Localizations.localeOf(context);
+    return DateFormat.yMMMMEEEEd(locale.toLanguageTag())
+        .format(DateTime.now());
   }
   final ImagePicker _imagePicker = ImagePicker();
 
@@ -249,13 +223,13 @@ class _MenuViewState extends State<MenuView> {
       context: context,
       builder: (dialogContext) {
         return AlertDialog(
-          title: const Text("Change Name"),
+          title: Text(context.tr('changeName')),
 
           content: TextField(
             controller: controller,
             autofocus: true,
-            decoration: const InputDecoration(
-              hintText: "Enter your name",
+            decoration:  InputDecoration(
+              hintText: context.tr('enterName'),
               border: OutlineInputBorder(),
             ),
           ),
@@ -265,7 +239,7 @@ class _MenuViewState extends State<MenuView> {
               onPressed: () {
                 Navigator.pop(dialogContext);
               },
-              child: const Text("Cancel"),
+              child: Text(context.tr('cancel')),
             ),
 
             ElevatedButton(
@@ -287,7 +261,7 @@ class _MenuViewState extends State<MenuView> {
                   Navigator.pop(dialogContext);
                 }
               },
-              child: const Text("Save"),
+              child: Text(context.tr('save')),
             ),
           ],
         );
@@ -385,8 +359,7 @@ class _MenuViewState extends State<MenuView> {
 
                       child: Row(
                         children: [
-                          Text(
-                            "Stage 1",
+                          Text(context.tr('stage1'),
                             style: TextStyle(
                               fontSize: 23,
                               color: TColor.primaryText,
@@ -396,8 +369,7 @@ class _MenuViewState extends State<MenuView> {
 
                           const SizedBox(width: 10),
 
-                          Text(
-                            "Start Strong",
+                          Text(context.tr('startStrong'),
                             style: TextStyle(
                               fontSize: 16,
                               color: TColor.primary,
@@ -484,8 +456,7 @@ class _MenuViewState extends State<MenuView> {
                                 const SizedBox(width: 14),
 
                                 Expanded(
-                                  child: Text(
-                                    "Full 30 Days Plan",
+                                  child: Text(context.tr('full30DaysPlan'),
                                     style: TextStyle(
                                       fontSize: 17,
                                       color: TColor.primary,
@@ -534,7 +505,6 @@ class _MenuViewState extends State<MenuView> {
   Widget _buildHeader() {
     return Container(
       width: double.infinity,
-      height: 305,
 
       decoration: BoxDecoration(
         color: TColor.primary,
@@ -574,65 +544,67 @@ class _MenuViewState extends State<MenuView> {
             children: [
               /// MENU + NOTIFICATION
 
-              Row(
-                mainAxisAlignment:
-                MainAxisAlignment.spaceBetween,
+              Directionality(
+                textDirection: ui.TextDirection.ltr,
+                child: Row(
+                  mainAxisAlignment:
+                  MainAxisAlignment.spaceBetween,
+                  children: [
+                    IconButton(
+                      onPressed: () {
+                        _scaffoldKey.currentState?.openDrawer();
+                        /// Future Drawer
+                      },
 
-                children: [
-                  IconButton(
-                    onPressed: () {
-                      _scaffoldKey.currentState?.openDrawer();
-                      /// Future Drawer
-                    },
-
-                    icon: const Icon(
-                      Icons.menu_rounded,
-                      color: Colors.white,
-                      size: 32,
-                    ),
-                  ),
-
-                  Stack(
-                    children: [
-                      IconButton(
-                        tooltip: "Schedule & Reminders",
-                        onPressed: () async {
-                          await Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => const ScheduleView(),
-                            ),
-                          );
-
-                          if (!mounted) return;
-                          await _loadReminderSummary();
-                        },
-
-                        icon: const Icon(
-                          Icons.notifications_none_rounded,
-                          color: Colors.white,
-                          size: 30,
-                        ),
+                      icon: const Icon(
+                        Icons.menu_rounded,
+                        color: Colors.white,
+                        size: 32,
                       ),
+                    ),
 
-                      Positioned(
-                        right: 8,
-                        top: 7,
+                    Stack(
+                      children: [
+                        IconButton(
+                          tooltip: context.tr('scheduleReminders'),
+                          onPressed: () async {
+                            await Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => const ScheduleView(),
+                              ),
+                            );
 
-                        child: Container(
-                          width: 9,
-                          height: 9,
+                            if (!mounted) return;
+                            await _loadReminderSummary();
+                          },
 
-                          decoration: BoxDecoration(
-                            color: const Color(0xffB76CFF),
-                            borderRadius:
-                            BorderRadius.circular(10),
+                          icon: const Icon(
+                            Icons.notifications_none_rounded,
+                            color: Colors.white,
+                            size: 30,
                           ),
                         ),
-                      ),
-                    ],
-                  ),
-                ],
+
+                        Positioned(
+                          right: 8,
+                          top: 7,
+
+                          child: Container(
+                            width: 9,
+                            height: 9,
+
+                            decoration: BoxDecoration(
+                              color: const Color(0xffB76CFF),
+                              borderRadius:
+                              BorderRadius.circular(10),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
 
 
@@ -698,7 +670,9 @@ class _MenuViewState extends State<MenuView> {
                             children: [
                               Flexible(
                                 child: Text(
-                                  profileName,
+                                  profileName == "Name"
+                                      ? context.tr('name')
+                                      : profileName,
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                   style: const TextStyle(
@@ -732,8 +706,7 @@ class _MenuViewState extends State<MenuView> {
                             BorderRadius.circular(20),
                           ),
 
-                          child: const Text(
-                            "Keep pushing, you're doing great!",
+                          child: Text(context.tr('keepPushing'),
                             style: TextStyle(
                               color: Colors.white,
                               fontSize: 12,
@@ -752,39 +725,42 @@ class _MenuViewState extends State<MenuView> {
               /// STATS
               /// =================================================
 
-              Row(
-                children: [
-                  Expanded(
-                    child: _buildStatCard(
-                      icon: Icons.fitness_center_rounded,
-                      title: "Workouts",
-                      value: totalWorkouts.toString(),
-                      bottom: "This Week",
+              Directionality(
+                textDirection: ui.TextDirection.ltr,
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: _buildStatCard(
+                        icon: Icons.fitness_center_rounded,
+                        title: context.tr('workouts'),
+                        value: totalWorkouts.toString(),
+                        bottom: context.tr('thisWeek'),
+                      ),
                     ),
-                  ),
 
-                  const SizedBox(width: 7),
+                    const SizedBox(width: 7),
 
-                  Expanded(
-                    child: _buildStatCard(
-                      icon: Icons.local_fire_department,
-                      title: "Calories",
-                      value: totalCalories.toStringAsFixed(0),
-                      bottom: "Burned",
+                    Expanded(
+                      child: _buildStatCard(
+                        icon: Icons.local_fire_department,
+                        title: context.tr('calories'),
+                        value: totalCalories.toStringAsFixed(0),
+                        bottom: context.tr('burned'),
+                      ),
                     ),
-                  ),
 
-                  const SizedBox(width: 10),
+                    const SizedBox(width: 10),
 
-                  Expanded(
-                    child: _buildStatCard(
-                      icon: Icons.bolt_rounded,
-                      title: "Streak",
-                      value: currentStreak.toString(),
-                      bottom: "Days",
+                    Expanded(
+                      child: _buildStatCard(
+                        icon: Icons.bolt_rounded,
+                        title: context.tr('streak'),
+                        value: currentStreak.toString(),
+                        bottom: context.tr('days'),
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ],
           ),
@@ -804,69 +780,70 @@ class _MenuViewState extends State<MenuView> {
     required String bottom,
   }) {
     return Container(
+      height: 78,
       padding: const EdgeInsets.symmetric(
-        horizontal: 10,
-        vertical: 12,
+        horizontal: 8,
+        vertical: 8,
       ),
-
       decoration: BoxDecoration(
         color: Colors.white.withOpacity(0.14),
-
         borderRadius: BorderRadius.circular(16),
-
         border: Border.all(
           color: Colors.white.withOpacity(0.12),
         ),
       ),
-
       child: Row(
         children: [
           Container(
-            width: 33,
-            height: 33,
-
+            width: 30,
+            height: 30,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               color: TColor.primary.withOpacity(0.55),
             ),
-
             child: Icon(
               icon,
               color: Colors.white,
-              size: 18,
+              size: 16,
             ),
           ),
-
-          const SizedBox(width: 8),
-
+          const SizedBox(width: 6),
           Expanded(
             child: Column(
-              crossAxisAlignment:
-              CrossAxisAlignment.start,
-
+              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
                     color: Colors.white,
-                    fontSize: 11,
+                    fontSize: 9.5,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
-
+                const SizedBox(height: 1),
                 Text(
                   value,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
                     color: Colors.white,
-                    fontSize: 19,
+                    fontSize: 17,
                     fontWeight: FontWeight.w800,
                   ),
                 ),
-
+                const SizedBox(height: 1),
                 Text(
                   bottom,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: TextStyle(
                     color: Colors.white.withOpacity(0.8),
-                    fontSize: 10,
+                    fontSize: 8.5,
+                    fontWeight: FontWeight.w500,
                   ),
                 ),
               ],
@@ -880,8 +857,8 @@ class _MenuViewState extends State<MenuView> {
   Widget _buildReminderSection() {
     final List<Map<String, dynamic>> reminders = [
       {
-        'title': 'Schedule',
-        'value': 'Manage all',
+        'title': context.tr('schedule'),
+        'value': context.tr('manageAll'),
         'enabled': true,
         'isSchedule': true,
         'icon': Icons.calendar_month_rounded,
@@ -890,7 +867,7 @@ class _MenuViewState extends State<MenuView> {
         'page': const ScheduleView(),
       },
       {
-        'title': 'Workout',
+        'title': context.tr('workout'),
         'value': workoutReminderValue,
         'enabled': workoutReminderEnabled,
         'icon': Icons.fitness_center_rounded,
@@ -899,7 +876,7 @@ class _MenuViewState extends State<MenuView> {
         'page': const WorkoutReminderView(),
       },
       {
-        'title': 'Water',
+        'title': context.tr('water'),
         'value': waterReminderValue,
         'enabled': waterReminderEnabled,
         'icon': Icons.water_drop_rounded,
@@ -908,7 +885,7 @@ class _MenuViewState extends State<MenuView> {
         'page': const WaterReminderView(),
       },
       {
-        'title': 'Meal',
+        'title': context.tr('meal'),
         'value': mealReminderValue,
         'enabled': mealReminderEnabled,
         'icon': Icons.restaurant_rounded,
@@ -917,7 +894,7 @@ class _MenuViewState extends State<MenuView> {
         'page': const MealReminderView(),
       },
       {
-        'title': 'Sleep',
+        'title': context.tr('sleep'),
         'value': sleepReminderValue,
         'enabled': sleepReminderEnabled,
         'icon': Icons.nightlight_round,
@@ -935,8 +912,7 @@ class _MenuViewState extends State<MenuView> {
           child: Row(
             children: [
               Expanded(
-                child: Text(
-                  "Today's Reminders",
+                child: Text(context.tr('todayReminders'),
                   style: TextStyle(
                     color: TColor.primaryText,
                     fontSize: 20,
@@ -944,8 +920,7 @@ class _MenuViewState extends State<MenuView> {
                   ),
                 ),
               ),
-              Text(
-                'Swipe',
+              Text(context.tr('swipe'),
                 style: TextStyle(
                   color: TColor.sceondarText,
                   fontSize: 11,
@@ -962,17 +937,20 @@ class _MenuViewState extends State<MenuView> {
           ),
         ),
         const SizedBox(height: 8),
-        SizedBox(
-          height: 126,
-          child: ListView.separated(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            scrollDirection: Axis.horizontal,
-            physics: const BouncingScrollPhysics(),
-            itemCount: reminders.length,
-            separatorBuilder: (_, __) => const SizedBox(width: 9),
-            itemBuilder: (context, index) {
-              return _buildReminderCard(reminders[index]);
-            },
+        Directionality(
+          textDirection: ui.TextDirection.ltr,
+          child: SizedBox(
+            height: 126,
+            child: ListView.separated(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              scrollDirection: Axis.horizontal,
+              physics: const BouncingScrollPhysics(),
+              itemCount: reminders.length,
+              separatorBuilder: (_, __) => const SizedBox(width: 9),
+              itemBuilder: (context, index) {
+                return _buildReminderCard(reminders[index]);
+              },
+            ),
           ),
         ),
       ],
@@ -1065,7 +1043,11 @@ class _MenuViewState extends State<MenuView> {
             ),
             const SizedBox(height: 5),
             Text(
-              isSchedule ? 'OPEN' : enabled ? 'ON' : 'SET',
+              isSchedule
+                  ? context.tr('open')
+                  : enabled
+                  ? context.tr('on')
+                  : context.tr('set'),
               style: TextStyle(
                 color: isSchedule
                     ? TColor.primary
@@ -1150,8 +1132,7 @@ class _MenuViewState extends State<MenuView> {
                     borderRadius: BorderRadius.circular(20),
                   ),
 
-                  child: const Text(
-                    "My Plan",
+                  child: Text(context.tr('myPlan'),
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w700,
@@ -1162,7 +1143,7 @@ class _MenuViewState extends State<MenuView> {
                 const SizedBox(height: 15),
 
                 Text(
-                  "LOSE WEIGHT",
+                  context.tr('loseWeight'),
                   style: TextStyle(
                     color: TColor.primaryText,
                     fontSize: 26,
@@ -1171,7 +1152,7 @@ class _MenuViewState extends State<MenuView> {
                 ),
 
                 Text(
-                  "IN 30 DAYS",
+                  context.tr('in30Days'),
                   style: TextStyle(
                     color: TColor.primary,
                     fontSize: 26,
@@ -1182,7 +1163,7 @@ class _MenuViewState extends State<MenuView> {
                 const Spacer(),
 
                 Text(
-                  "Your journey to a better\nand healthier you.",
+                  context.tr('healthyJourney'),
                   style: TextStyle(
                     color: TColor.primaryText,
                     fontSize: 13,
@@ -1217,8 +1198,8 @@ class _MenuViewState extends State<MenuView> {
 
                 child: Row(
                   children: [
-                    const Text(
-                      "Adjust Plan",
+                    Text(
+                      context.tr('adjustPlan'),
                       style: TextStyle(
                         fontWeight: FontWeight.w600,
                         fontSize: 12,
@@ -1449,7 +1430,7 @@ class _MenuViewState extends State<MenuView> {
 
                             children: [
                               Text(
-                                item["day"],
+                                '${context.tr('day')} ${index + 1}',
 
                                 style: TextStyle(
                                   color: active
@@ -1465,7 +1446,7 @@ class _MenuViewState extends State<MenuView> {
                               const SizedBox(height: 8),
 
                               Text(
-                                "${item["time"]} • ${item["calorie"]}",
+                                '5 ${context.tr('minuteShort')} • ${(68.1 + index).toStringAsFixed(1)} ${context.tr('kcal')}',
 
 
 
@@ -1485,7 +1466,7 @@ class _MenuViewState extends State<MenuView> {
                                     Expanded(
                                       child: Text(
                                         progress.completed
-                                            ? "Workout completed"
+                                            ? context.tr('workoutCompleted')
                                             : progress.progressText,
                                         style: TextStyle(
                                           color: active
@@ -1580,10 +1561,10 @@ class _MenuViewState extends State<MenuView> {
                                           child: Center(
                                             child:  Text(
                                               progress.completed
-                                                  ? "REPEAT"
+                                                  ? context.tr('repeat')
                                                   : progress.started
-                                                  ? "CONTINUE"
-                                                  : "START",
+                                                  ? context.tr('continueUpper')
+                                                  : context.tr('startUpper'),
                                               style: const TextStyle(
                                                 color: Colors.black,
                                                 fontSize: 17,
@@ -1652,54 +1633,57 @@ class _MenuViewState extends State<MenuView> {
             ),
           ],
         ),
-        child: Row(
-          children: [
-            _bottomItem(
-              Icons.home_rounded,
-              "Home",
-              true,
-                  () {},
-            ),
-            _bottomItem(
-              Icons.assignment_rounded,
-              "Plan",
-              false,
-                  () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => const PlanView(),
-                  ),
-                );
-              },
-            ),
-            _bottomItem(
-              Icons.bar_chart_rounded,
-              "Reports",
-              false,
-                  () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => const ReportsView(),
-                  ),
-                );
-              },
-            ),
-            _bottomItem(
-              Icons.person_outline_rounded,
-              "Me",
-              false,
-                  () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => const MeView(),
-                  ),
-                );
-              },
-            ),
-          ],
+        child: Directionality(
+          textDirection: ui.TextDirection.ltr,
+          child: Row(
+            children: [
+              _bottomItem(
+                Icons.home_rounded,
+                context.tr('home'),
+                true,
+                    () {},
+              ),
+              _bottomItem(
+                Icons.assignment_rounded,
+                context.tr('plan'),
+                false,
+                    () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const PlanView(),
+                    ),
+                  );
+                },
+              ),
+              _bottomItem(
+                Icons.bar_chart_rounded,
+                context.tr('reports'),
+                false,
+                    () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const ReportsView(),
+                    ),
+                  );
+                },
+              ),
+              _bottomItem(
+                Icons.person_outline_rounded,
+                context.tr('me'),
+                false,
+                    () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const MeView(),
+                    ),
+                  );
+                },
+              ),
+            ],
+          ),
         ),
       ),
     );

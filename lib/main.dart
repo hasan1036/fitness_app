@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 
 import 'package:workoutfitnesstool/common/color_extention.dart';
 import 'package:workoutfitnesstool/service/notification_service.dart';
+import 'package:workoutfitnesstool/service/language_service.dart';
+import 'package:workoutfitnesstool/l10n/app_localizations.dart';
 import 'package:workoutfitnesstool/view/login/on_boarding_view.dart';
 
 Future<void> main() async {
@@ -19,6 +22,8 @@ Future<void> main() async {
     );
   }
 
+  await LanguageService.initialize();
+
   runApp(const MyApp());
 }
 
@@ -27,7 +32,18 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    return ValueListenableBuilder<Locale>(
+      valueListenable: LanguageService.localeNotifier,
+      builder: (context, locale, _) {
+        return MaterialApp(
+      locale: locale,
+      supportedLocales: LanguageService.supportedLocales,
+      localizationsDelegates: const [
+        AppLocalizations.delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
       title: 'Fitness Workout',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
@@ -37,6 +53,8 @@ class MyApp extends StatelessWidget {
         useMaterial3: false,
       ),
       home: const OnBoardingView(),
+        );
+      },
     );
   }
 }

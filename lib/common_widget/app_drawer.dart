@@ -9,6 +9,7 @@ import '../view/plan/plan_view.dart';
 import '../view/settings/settings_view.dart';
 import '../reports/weight_progress_view.dart';
 
+import '../l10n/app_localizations.dart';
 class AppDrawer extends StatelessWidget {
   final String profileName;
   final String? profileImagePath;
@@ -66,7 +67,7 @@ class AppDrawer extends StatelessWidget {
                   ),
                   const SizedBox(height: 6),
                   Text(
-                    'Keep pushing! 🔥',
+                    context.tr('keepPushingShort'),
                     style: TextStyle(
                       color: Colors.white.withOpacity(.9),
                       fontSize: 14,
@@ -78,13 +79,13 @@ class AppDrawer extends StatelessWidget {
             _drawerItem(
               context,
               icon: Icons.home,
-              title: 'Home',
+              title: context.tr('home'),
               onTap: () => Navigator.pop(context),
             ),
             _drawerItem(
               context,
               icon: Icons.fitness_center,
-              title: 'My Plan',
+              title: context.tr('myPlan'),
               onTap: () => _openPage(
                 context,
                 const PlanView(),
@@ -93,7 +94,7 @@ class AppDrawer extends StatelessWidget {
             _drawerItem(
               context,
               icon: Icons.bar_chart,
-              title: 'Reports',
+              title: context.tr('reports'),
               onTap: () => _openPage(
                 context,
                 const ReportsView(),
@@ -102,7 +103,7 @@ class AppDrawer extends StatelessWidget {
             _drawerItem(
               context,
               icon: Icons.restaurant,
-              title: 'Meal Plan',
+              title: context.tr('mealPlan'),
               onTap: () => _openPage(
                 context,
                 const MealPlanView(),
@@ -111,7 +112,7 @@ class AppDrawer extends StatelessWidget {
             _drawerItem(
               context,
               icon: Icons.monitor_weight,
-              title: 'Weight',
+              title: context.tr('weight'),
               onTap: () => _openPage(
                 context,
                 const WeightProgressView(),
@@ -122,7 +123,7 @@ class AppDrawer extends StatelessWidget {
             _drawerItem(
               context,
               icon: Icons.settings,
-              title: 'Settings',
+              title: context.tr('settings'),
               onTap: () => _openPage(
                 context,
                 const SettingsView(),
@@ -131,7 +132,7 @@ class AppDrawer extends StatelessWidget {
             _drawerItem(
               context,
               icon: Icons.info_outline,
-              title: 'About',
+              title: context.tr('about'),
               onTap: () => _openPage(
                 context,
                 const AboutView(),

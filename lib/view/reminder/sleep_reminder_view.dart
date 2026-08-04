@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../common/color_extention.dart';
+import '../../l10n/app_localizations.dart';
 import '../../service/notification_service.dart';
 
 class SleepReminderView extends StatefulWidget {
@@ -16,19 +17,14 @@ class _SleepReminderViewState
     extends State<SleepReminderView> {
   static const String _enabledKey =
       'sleep_reminder_enabled';
-
   static const String _bedHourKey =
       'sleep_reminder_bed_hour';
-
   static const String _bedMinuteKey =
       'sleep_reminder_bed_minute';
-
   static const String _wakeHourKey =
       'sleep_reminder_wake_hour';
-
   static const String _wakeMinuteKey =
       'sleep_reminder_wake_minute';
-
   static const String _daysKey =
       'sleep_reminder_days';
 
@@ -37,23 +33,22 @@ class _SleepReminderViewState
   bool isSaving = false;
 
   TimeOfDay bedTime =
-      const TimeOfDay(hour: 22, minute: 30);
-
+  const TimeOfDay(hour: 22, minute: 30);
   TimeOfDay wakeTime =
-      const TimeOfDay(hour: 6, minute: 30);
+  const TimeOfDay(hour: 6, minute: 30);
 
-  final List<String> dayNames = const [
-    'Mon',
-    'Tue',
-    'Wed',
-    'Thu',
-    'Fri',
-    'Sat',
-    'Sun',
+  final List<String> dayKeys = const [
+    'mondayShort',
+    'tuesdayShort',
+    'wednesdayShort',
+    'thursdayShort',
+    'fridayShort',
+    'saturdayShort',
+    'sundayShort',
   ];
 
   List<bool> selectedDays =
-      List<bool>.filled(7, true);
+  List<bool>.filled(7, true);
 
   @override
   void initState() {
@@ -63,7 +58,7 @@ class _SleepReminderViewState
 
   Future<void> _loadSettings() async {
     final SharedPreferences prefs =
-        await SharedPreferences.getInstance();
+    await SharedPreferences.getInstance();
 
     final List<String> savedDays =
         prefs.getStringList(_daysKey) ?? [];
@@ -87,9 +82,8 @@ class _SleepReminderViewState
       if (savedDays.isNotEmpty) {
         selectedDays = List<bool>.generate(
           7,
-          (index) => savedDays.contains(
-            index.toString(),
-          ),
+              (index) =>
+              savedDays.contains(index.toString()),
         );
       }
 
@@ -99,7 +93,7 @@ class _SleepReminderViewState
 
   Future<void> _pickBedTime() async {
     final TimeOfDay? result =
-        await showTimePicker(
+    await showTimePicker(
       context: context,
       initialTime: bedTime,
     );
@@ -113,7 +107,7 @@ class _SleepReminderViewState
 
   Future<void> _pickWakeTime() async {
     final TimeOfDay? result =
-        await showTimePicker(
+    await showTimePicker(
       context: context,
       initialTime: wakeTime,
     );
@@ -129,9 +123,9 @@ class _SleepReminderViewState
     if (reminderEnabled &&
         !selectedDays.contains(true)) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
+        SnackBar(
           content: Text(
-            'Select at least one reminder day',
+            context.tr('selectAtLeastOneDay'),
           ),
         ),
       );
@@ -144,12 +138,14 @@ class _SleepReminderViewState
 
     try {
       final SharedPreferences prefs =
-          await SharedPreferences.getInstance();
+      await SharedPreferences.getInstance();
 
       final List<int> selectedDayIndexes = [];
       final List<String> selectedDayStrings = [];
 
-      for (int i = 0; i < selectedDays.length; i++) {
+      for (int i = 0;
+      i < selectedDays.length;
+      i++) {
         if (selectedDays[i]) {
           selectedDayIndexes.add(i);
           selectedDayStrings.add(i.toString());
@@ -187,15 +183,18 @@ class _SleepReminderViewState
       );
 
       if (reminderEnabled) {
-        await NotificationService.scheduleSleepReminders(
+        await NotificationService
+            .scheduleSleepReminders(
           bedHour: bedTime.hour,
           bedMinute: bedTime.minute,
           wakeHour: wakeTime.hour,
           wakeMinute: wakeTime.minute,
-          selectedDayIndexes: selectedDayIndexes,
+          selectedDayIndexes:
+          selectedDayIndexes,
         );
       } else {
-        await NotificationService.cancelSleepReminders();
+        await NotificationService
+            .cancelSleepReminders();
       }
 
       if (!mounted) return;
@@ -204,8 +203,12 @@ class _SleepReminderViewState
         SnackBar(
           content: Text(
             reminderEnabled
-                ? 'Sleep reminders scheduled'
-                : 'Sleep reminders turned off',
+                ? context.tr(
+              'sleepRemindersScheduled',
+            )
+                : context.tr(
+              'sleepRemindersTurnedOff',
+            ),
           ),
         ),
       );
@@ -215,7 +218,7 @@ class _SleepReminderViewState
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            'Could not save sleep reminders: $error',
+            '${context.tr('couldNotSaveSleepReminders')}: $error',
           ),
         ),
       );
@@ -246,28 +249,26 @@ class _SleepReminderViewState
 
   String get sleepDurationText {
     final int hours = sleepDuration.inHours;
-
     final int minutes =
-        sleepDuration.inMinutes.remainder(60);
+    sleepDuration.inMinutes.remainder(60);
 
     if (minutes == 0) {
-      return '$hours hours';
+      return '$hours ${context.tr('hours')}';
     }
 
-    return '$hours h $minutes min';
+    return '$hours ${context.tr('hoursShort')} '
+        '$minutes ${context.tr('minuteShort')}';
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor:
-          const Color(0xffF7F3FD),
-
+      const Color(0xffF7F3FD),
       appBar: AppBar(
         backgroundColor:
-            const Color(0xffF7F3FD),
+        const Color(0xffF7F3FD),
         elevation: 0,
-
         leading: IconButton(
           onPressed: () {
             Navigator.pop(context);
@@ -277,268 +278,295 @@ class _SleepReminderViewState
             color: Colors.black,
           ),
         ),
-
-        title: const Text(
-          'Sleep Reminder',
-          style: TextStyle(
+        title: Text(
+          context.tr('sleepReminder'),
+          style: const TextStyle(
             color: Colors.black,
             fontSize: 22,
             fontWeight: FontWeight.w800,
           ),
         ),
       ),
-
       body: isLoading
           ? Center(
-              child: CircularProgressIndicator(
-                color: TColor.primary,
-              ),
-            )
+        child: CircularProgressIndicator(
+          color: TColor.primary,
+        ),
+      )
           : ListView(
-              padding:
-                  const EdgeInsets.fromLTRB(
-                20,
-                10,
-                20,
-                30,
+        padding:
+        const EdgeInsets.fromLTRB(
+          20,
+          10,
+          20,
+          30,
+        ),
+        children: [
+          _buildHeader(context),
+          const SizedBox(height: 20),
+          _settingCard(
+            child: SwitchListTile(
+              contentPadding:
+              EdgeInsets.zero,
+              value: reminderEnabled,
+              activeColor:
+              TColor.primary,
+              title: Text(
+                context.tr(
+                  'enableSleepReminder',
+                ),
+                style: const TextStyle(
+                  fontSize: 17,
+                  fontWeight:
+                  FontWeight.w800,
+                ),
               ),
+              subtitle: Text(
+                reminderEnabled
+                    ? context.tr(
+                  'sleepRemindersActive',
+                )
+                    : context.tr(
+                  'sleepRemindersOff',
+                ),
+                style: TextStyle(
+                  color:
+                  TColor.sceondarText,
+                ),
+              ),
+              secondary: Icon(
+                Icons.bedtime_rounded,
+                color: reminderEnabled
+                    ? TColor.primary
+                    : Colors.grey,
+              ),
+              onChanged: (value) {
+                setState(() {
+                  reminderEnabled =
+                      value;
+                });
+              },
+            ),
+          ),
+          const SizedBox(height: 22),
+          Text(
+            context.tr('sleepSchedule'),
+            style: TextStyle(
+              color: TColor.primaryText,
+              fontSize: 20,
+              fontWeight:
+              FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: 12),
+          _timeTile(
+            icon:
+            Icons.bedtime_rounded,
+            title:
+            context.tr('bedTime'),
+            subtitle: context.tr(
+              'prepareForSleepReminder',
+            ),
+            time: bedTime,
+            enabled:
+            reminderEnabled,
+            onTap: _pickBedTime,
+          ),
+          const SizedBox(height: 12),
+          _timeTile(
+            icon:
+            Icons.wb_sunny_rounded,
+            title:
+            context.tr('wakeUpTime'),
+            subtitle: context.tr(
+              'morningWakeUpNotification',
+            ),
+            time: wakeTime,
+            enabled:
+            reminderEnabled,
+            onTap: _pickWakeTime,
+          ),
+          const SizedBox(height: 14),
+          Container(
+            padding:
+            const EdgeInsets.all(17),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius:
+              BorderRadius.circular(
+                20,
+              ),
+            ),
+            child: Row(
               children: [
-                _buildHeader(),
-
-                const SizedBox(height: 20),
-
-                _settingCard(
-                  child: SwitchListTile(
-                    contentPadding:
-                        EdgeInsets.zero,
-                    value: reminderEnabled,
-                    activeColor: TColor.primary,
-
-                    title: const Text(
-                      'Enable Sleep Reminder',
-                      style: TextStyle(
-                        fontSize: 17,
-                        fontWeight:
-                            FontWeight.w800,
-                      ),
-                    ),
-
-                    subtitle: Text(
-                      reminderEnabled
-                          ? 'Sleep reminders are active'
-                          : 'Sleep reminders are turned off',
-                      style: TextStyle(
-                        color:
-                            TColor.sceondarText,
-                      ),
-                    ),
-
-                    secondary: Icon(
-                      Icons.bedtime_rounded,
-                      color: reminderEnabled
-                          ? TColor.primary
-                          : Colors.grey,
-                    ),
-
-                    onChanged: (value) {
-                      setState(() {
-                        reminderEnabled = value;
-                      });
-                    },
-                  ),
-                ),
-
-                const SizedBox(height: 22),
-
-                Text(
-                  'Sleep Schedule',
-                  style: TextStyle(
-                    color: TColor.primaryText,
-                    fontSize: 20,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-
-                const SizedBox(height: 12),
-
-                _timeTile(
-                  icon: Icons.bedtime_rounded,
-                  title: 'Bed Time',
-                  subtitle:
-                      'Reminder to prepare for sleep',
-                  time: bedTime,
-                  enabled: reminderEnabled,
-                  onTap: _pickBedTime,
-                ),
-
-                const SizedBox(height: 12),
-
-                _timeTile(
-                  icon: Icons.wb_sunny_rounded,
-                  title: 'Wake Up Time',
-                  subtitle:
-                      'Morning wake-up notification',
-                  time: wakeTime,
-                  enabled: reminderEnabled,
-                  onTap: _pickWakeTime,
-                ),
-
-                const SizedBox(height: 14),
-
                 Container(
-                  padding: const EdgeInsets.all(17),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
+                  width: 48,
+                  height: 48,
+                  decoration:
+                  BoxDecoration(
+                    color:
+                    TColor.primaryLight,
                     borderRadius:
-                        BorderRadius.circular(20),
+                    BorderRadius.circular(
+                      15,
+                    ),
                   ),
-                  child: Row(
+                  child: Icon(
+                    Icons.schedule_rounded,
+                    color: TColor.primary,
+                  ),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment:
+                    CrossAxisAlignment
+                        .start,
                     children: [
-                      Container(
-                        width: 48,
-                        height: 48,
-                        decoration: BoxDecoration(
-                          color: TColor.primaryLight,
-                          borderRadius:
-                              BorderRadius.circular(15),
+                      Text(
+                        context.tr(
+                          'plannedSleep',
                         ),
-                        child: Icon(
-                          Icons.schedule_rounded,
-                          color: TColor.primary,
+                        style:
+                        const TextStyle(
+                          fontSize: 14,
+                          fontWeight:
+                          FontWeight.w700,
                         ),
                       ),
-                      const SizedBox(width: 14),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment:
-                              CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              'Planned Sleep',
-                              style: TextStyle(
-                                fontSize: 14,
-                                fontWeight:
-                                    FontWeight.w700,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              sleepDurationText,
-                              style: TextStyle(
-                                color: TColor.primary,
-                                fontSize: 18,
-                                fontWeight:
-                                    FontWeight.w900,
-                              ),
-                            ),
-                          ],
+                      const SizedBox(
+                        height: 4,
+                      ),
+                      Text(
+                        sleepDurationText,
+                        style: TextStyle(
+                          color:
+                          TColor.primary,
+                          fontSize: 18,
+                          fontWeight:
+                          FontWeight.w900,
                         ),
                       ),
                     ],
                   ),
                 ),
-
-                const SizedBox(height: 22),
-
-                Text(
-                  'Repeat Days',
-                  style: TextStyle(
-                    color: TColor.primaryText,
-                    fontSize: 20,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-
-                const SizedBox(height: 12),
-
-                Wrap(
-                  spacing: 10,
-                  runSpacing: 10,
-                  children: List.generate(
-                    dayNames.length,
-                    (index) {
-                      final bool selected =
-                          selectedDays[index];
-
-                      return ChoiceChip(
-                        label: Text(dayNames[index]),
-                        selected: selected,
-                        selectedColor:
-                            TColor.primary,
-                        backgroundColor:
-                            Colors.white,
-                        disabledColor:
-                            Colors.grey.shade200,
-
-                        labelStyle: TextStyle(
-                          color: selected
-                              ? Colors.white
-                              : reminderEnabled
-                                  ? TColor.primaryText
-                                  : Colors.grey,
-                          fontWeight:
-                              FontWeight.w700,
-                        ),
-
-                        onSelected: reminderEnabled
-                            ? (value) {
-                                setState(() {
-                                  selectedDays[index] =
-                                      value;
-                                });
-                              }
-                            : null,
-                      );
-                    },
-                  ),
-                ),
-
-                const SizedBox(height: 28),
-
-                SizedBox(
-                  height: 58,
-                  child: ElevatedButton(
-                    onPressed: isSaving
-                        ? null
-                        : _saveSettings,
-                    style:
-                        ElevatedButton.styleFrom(
-                      backgroundColor:
-                          TColor.primary,
-                      foregroundColor:
-                          Colors.white,
-                      elevation: 0,
-                      shape: RoundedRectangleBorder(
-                        borderRadius:
-                            BorderRadius.circular(20),
-                      ),
-                    ),
-                    child: isSaving
-                        ? const SizedBox(
-                            width: 24,
-                            height: 24,
-                            child:
-                                CircularProgressIndicator(
-                              strokeWidth: 2.5,
-                              color: Colors.white,
-                            ),
-                          )
-                        : const Text(
-                            'SAVE SLEEP REMINDER',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight:
-                                  FontWeight.w800,
-                            ),
-                          ),
-                  ),
-                ),
               ],
             ),
+          ),
+          const SizedBox(height: 22),
+          Text(
+            context.tr('repeatDays'),
+            style: TextStyle(
+              color: TColor.primaryText,
+              fontSize: 20,
+              fontWeight:
+              FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            children: List.generate(
+              dayKeys.length,
+                  (index) {
+                final bool selected =
+                selectedDays[index];
+
+                return ChoiceChip(
+                  label: Text(
+                    context.tr(
+                      dayKeys[index],
+                    ),
+                  ),
+                  selected: selected,
+                  selectedColor:
+                  TColor.primary,
+                  backgroundColor:
+                  Colors.white,
+                  disabledColor:
+                  Colors.grey.shade200,
+                  labelStyle:
+                  TextStyle(
+                    color: selected
+                        ? Colors.white
+                        : reminderEnabled
+                        ? TColor
+                        .primaryText
+                        : Colors.grey,
+                    fontWeight:
+                    FontWeight.w700,
+                  ),
+                  onSelected:
+                  reminderEnabled
+                      ? (value) {
+                    setState(() {
+                      selectedDays[
+                      index] =
+                          value;
+                    });
+                  }
+                      : null,
+                );
+              },
+            ),
+          ),
+          const SizedBox(height: 28),
+          SizedBox(
+            height: 58,
+            child: ElevatedButton(
+              onPressed:
+              isSaving
+                  ? null
+                  : _saveSettings,
+              style:
+              ElevatedButton.styleFrom(
+                backgroundColor:
+                TColor.primary,
+                foregroundColor:
+                Colors.white,
+                elevation: 0,
+                shape:
+                RoundedRectangleBorder(
+                  borderRadius:
+                  BorderRadius.circular(
+                    20,
+                  ),
+                ),
+              ),
+              child: isSaving
+                  ? const SizedBox(
+                width: 24,
+                height: 24,
+                child:
+                CircularProgressIndicator(
+                  strokeWidth: 2.5,
+                  color: Colors.white,
+                ),
+              )
+                  : Text(
+                context.tr(
+                  'saveSleepReminder',
+                ),
+                textAlign:
+                TextAlign.center,
+                style:
+                const TextStyle(
+                  fontSize: 16,
+                  fontWeight:
+                  FontWeight.w800,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
-  Widget _buildHeader() {
+  Widget _buildHeader(
+      BuildContext context,
+      ) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(22),
@@ -552,7 +580,7 @@ class _SleepReminderViewState
           end: Alignment.bottomRight,
         ),
         borderRadius:
-            BorderRadius.circular(24),
+        BorderRadius.circular(24),
       ),
       child: Row(
         children: [
@@ -561,7 +589,7 @@ class _SleepReminderViewState
             height: 68,
             decoration: BoxDecoration(
               color:
-                  Colors.white.withOpacity(0.16),
+              Colors.white.withOpacity(0.16),
               shape: BoxShape.circle,
             ),
             child: const Icon(
@@ -574,23 +602,27 @@ class _SleepReminderViewState
           Expanded(
             child: Column(
               crossAxisAlignment:
-                  CrossAxisAlignment.start,
+              CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'Build a Healthy Sleep Routine',
-                  style: TextStyle(
+                Text(
+                  context.tr(
+                    'healthySleepRoutine',
+                  ),
+                  style: const TextStyle(
                     color: Colors.white,
                     fontSize: 20,
                     fontWeight:
-                        FontWeight.w900,
+                    FontWeight.w900,
                   ),
                 ),
                 const SizedBox(height: 7),
                 Text(
-                  'Set bedtime and wake-up reminders for better recovery.',
+                  context.tr(
+                    'sleepReminderHeaderSubtitle',
+                  ),
                   style: TextStyle(
                     color:
-                        Colors.white.withOpacity(
+                    Colors.white.withOpacity(
                       0.86,
                     ),
                     fontSize: 13,
@@ -615,10 +647,10 @@ class _SleepReminderViewState
   }) {
     return _settingCard(
       child: ListTile(
-        contentPadding: EdgeInsets.zero,
+        contentPadding:
+        EdgeInsets.zero,
         enabled: enabled,
         onTap: enabled ? onTap : null,
-
         leading: Container(
           width: 47,
           height: 47,
@@ -627,7 +659,7 @@ class _SleepReminderViewState
                 ? TColor.primaryLight
                 : Colors.grey.shade200,
             borderRadius:
-                BorderRadius.circular(14),
+            BorderRadius.circular(14),
           ),
           child: Icon(
             icon,
@@ -636,28 +668,33 @@ class _SleepReminderViewState
                 : Colors.grey,
           ),
         ),
-
         title: Text(
           title,
+          maxLines: 2,
+          overflow:
+          TextOverflow.ellipsis,
           style: const TextStyle(
             fontSize: 15,
-            fontWeight: FontWeight.w800,
+            fontWeight:
+            FontWeight.w800,
           ),
         ),
-
         subtitle: Text(
           subtitle,
+          maxLines: 2,
+          overflow:
+          TextOverflow.ellipsis,
           style: TextStyle(
-            color: TColor.sceondarText,
+            color:
+            TColor.sceondarText,
             fontSize: 11,
           ),
         ),
-
         trailing: Column(
           mainAxisAlignment:
-              MainAxisAlignment.center,
+          MainAxisAlignment.center,
           crossAxisAlignment:
-              CrossAxisAlignment.end,
+          CrossAxisAlignment.end,
           children: [
             Text(
               time.format(context),
@@ -667,7 +704,7 @@ class _SleepReminderViewState
                     : Colors.grey,
                 fontSize: 15,
                 fontWeight:
-                    FontWeight.w800,
+                FontWeight.w800,
               ),
             ),
             const SizedBox(height: 3),
@@ -688,14 +725,15 @@ class _SleepReminderViewState
     required Widget child,
   }) {
     return Container(
-      padding: const EdgeInsets.symmetric(
+      padding:
+      const EdgeInsets.symmetric(
         horizontal: 16,
         vertical: 5,
       ),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius:
-            BorderRadius.circular(20),
+        BorderRadius.circular(20),
         boxShadow: const [
           BoxShadow(
             color: Color(0x0D000000),

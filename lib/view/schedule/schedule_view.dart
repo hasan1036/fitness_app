@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+
 import '../../common/color_extention.dart';
-import '../reminder/workout_reminder_view.dart';
-import '../reminder/water_reminder_view.dart';
+import '../../l10n/app_localizations.dart';
 import '../reminder/meal_reminder_view.dart';
 import '../reminder/sleep_reminder_view.dart';
+import '../reminder/water_reminder_view.dart';
+import '../reminder/workout_reminder_view.dart';
 
 class ScheduleView extends StatelessWidget {
   const ScheduleView({super.key});
@@ -12,11 +14,9 @@ class ScheduleView extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xffF7F3FD),
-
       appBar: AppBar(
         backgroundColor: const Color(0xffF7F3FD),
         elevation: 0,
-
         leading: IconButton(
           onPressed: () {
             Navigator.pop(context);
@@ -26,17 +26,15 @@ class ScheduleView extends StatelessWidget {
             color: Colors.black,
           ),
         ),
-
-        title: const Text(
-          "Schedule & Reminders",
-          style: TextStyle(
+        title: Text(
+          context.tr('scheduleReminders'),
+          style: const TextStyle(
             color: Colors.black,
             fontSize: 22,
             fontWeight: FontWeight.w800,
           ),
         ),
       ),
-
       body: ListView(
         padding: const EdgeInsets.fromLTRB(
           20,
@@ -45,26 +43,22 @@ class ScheduleView extends StatelessWidget {
           30,
         ),
         children: [
-          _buildHeader(),
-
+          _buildHeader(context),
           const SizedBox(height: 26),
-
           Text(
-            "Your Reminders",
+            context.tr('yourReminders'),
             style: TextStyle(
               color: TColor.primaryText,
               fontSize: 22,
               fontWeight: FontWeight.w800,
             ),
           ),
-
           const SizedBox(height: 14),
-
           _reminderCard(
             context: context,
             icon: Icons.fitness_center_rounded,
-            title: "Workout Reminder",
-            subtitle: "Set your daily workout time",
+            title: context.tr('workoutReminder'),
+            subtitle: context.tr('workoutReminderSubtitle'),
             enabled: true,
             onTap: () {
               Navigator.push(
@@ -76,57 +70,55 @@ class ScheduleView extends StatelessWidget {
               );
             },
           ),
-
           _reminderCard(
             context: context,
             icon: Icons.water_drop_rounded,
-            title: "Water Reminder",
-            subtitle: "Remember to drink enough water",
+            title: context.tr('waterReminder'),
+            subtitle: context.tr('waterReminderSubtitle'),
             enabled: true,
             onTap: () {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (_) => const WaterReminderView(),
+                  builder: (_) =>
+                  const WaterReminderView(),
                 ),
               );
             },
           ),
-
           _reminderCard(
             context: context,
             icon: Icons.restaurant_rounded,
-            title: "Meal Reminder",
-            subtitle: "Schedule breakfast, snack, lunch and dinner",
+            title: context.tr('mealReminder'),
+            subtitle: context.tr('mealReminderSubtitle'),
             enabled: true,
             onTap: () {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (_) => const MealReminderView(),
+                  builder: (_) =>
+                  const MealReminderView(),
                 ),
               );
             },
           ),
-
           _reminderCard(
             context: context,
             icon: Icons.bedtime_rounded,
-            title: "Sleep Reminder",
-            subtitle: "Maintain a healthy sleeping routine",
+            title: context.tr('sleepReminder'),
+            subtitle: context.tr('sleepReminderSubtitle'),
             enabled: true,
             onTap: () {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (_) => const SleepReminderView(),
+                  builder: (_) =>
+                  const SleepReminderView(),
                 ),
               );
             },
           ),
-
           const SizedBox(height: 14),
-
           Container(
             padding: const EdgeInsets.all(18),
             decoration: BoxDecoration(
@@ -147,12 +139,10 @@ class ScheduleView extends StatelessWidget {
                     color: TColor.primary,
                   ),
                 ),
-
                 const SizedBox(width: 14),
-
                 Expanded(
                   child: Text(
-                    "Reminders help you stay consistent with your fitness routine.",
+                    context.tr('reminderInfo'),
                     style: TextStyle(
                       color: TColor.sceondarText,
                       fontSize: 13,
@@ -168,7 +158,7 @@ class ScheduleView extends StatelessWidget {
     );
   }
 
-  Widget _buildHeader() {
+  Widget _buildHeader(BuildContext context) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(22),
@@ -198,26 +188,22 @@ class ScheduleView extends StatelessWidget {
               size: 36,
             ),
           ),
-
           const SizedBox(width: 16),
-
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  "Stay on Schedule",
-                  style: TextStyle(
+                Text(
+                  context.tr('stayOnSchedule'),
+                  style: const TextStyle(
                     color: Colors.white,
                     fontSize: 21,
                     fontWeight: FontWeight.w900,
                   ),
                 ),
-
                 const SizedBox(height: 7),
-
                 Text(
-                  "Create reminders and never miss your healthy routine.",
+                  context.tr('stayOnScheduleSubtitle'),
                   style: TextStyle(
                     color: Colors.white.withOpacity(0.86),
                     fontSize: 13,
@@ -255,12 +241,10 @@ class ScheduleView extends StatelessWidget {
       ),
       child: ListTile(
         onTap: enabled ? onTap : null,
-
         contentPadding: const EdgeInsets.symmetric(
           horizontal: 16,
           vertical: 9,
         ),
-
         leading: Container(
           width: 50,
           height: 50,
@@ -277,9 +261,10 @@ class ScheduleView extends StatelessWidget {
                 : Colors.grey,
           ),
         ),
-
         title: Text(
           title,
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
           style: TextStyle(
             color: enabled
                 ? TColor.primaryText
@@ -288,18 +273,19 @@ class ScheduleView extends StatelessWidget {
             fontWeight: FontWeight.w800,
           ),
         ),
-
         subtitle: Padding(
           padding: const EdgeInsets.only(top: 4),
           child: Text(
             subtitle,
+            maxLines: 3,
+            overflow: TextOverflow.ellipsis,
             style: TextStyle(
               color: TColor.sceondarText,
               fontSize: 12,
+              height: 1.35,
             ),
           ),
         ),
-
         trailing: enabled
             ? Icon(
           Icons.arrow_forward_ios_rounded,
@@ -315,9 +301,9 @@ class ScheduleView extends StatelessWidget {
             color: Colors.grey.shade200,
             borderRadius: BorderRadius.circular(20),
           ),
-          child: const Text(
-            "Soon",
-            style: TextStyle(
+          child: Text(
+            context.tr('soon'),
+            style: const TextStyle(
               color: Colors.grey,
               fontSize: 10,
               fontWeight: FontWeight.w700,

@@ -5,12 +5,14 @@ import 'package:flutter/material.dart';
 import '../../common/color_extention.dart';
 import '../../service/profile_service.dart';
 import '../../service/user_profile_service.dart';
+import '../../service/weight_unit_service.dart';
 import '../meal_plan/mean_plan_view.dart';
 import '../profile/profile_setup_view.dart';
 import '../schedule/schedule_view.dart';
 import '../water/water_tracker_view.dart';
 import '../../reports/weight_progress_view.dart';
 
+import '../../l10n/app_localizations.dart';
 class MeView extends StatefulWidget {
   const MeView({super.key});
 
@@ -23,6 +25,7 @@ class _MeViewState extends State<MeView> {
   String profileName = "Name";
   String? profileImagePath;
   UserProfileData? profile;
+  String weightUnit = WeightUnitService.kilograms;
 
   @override
   void initState() {
@@ -36,6 +39,7 @@ class _MeViewState extends State<MeView> {
         await ProfileService.getImagePath();
     final UserProfileData data =
         await UserProfileService.getProfile();
+    final String unit = await WeightUnitService.getUnit();
 
     if (!mounted) return;
 
@@ -43,6 +47,7 @@ class _MeViewState extends State<MeView> {
       profileName = name;
       profileImagePath = imagePath;
       profile = data;
+      weightUnit = unit;
       isLoading = false;
     });
   }
@@ -98,8 +103,7 @@ class _MeViewState extends State<MeView> {
             color: Colors.black,
           ),
         ),
-        title: const Text(
-          "Me",
+        title: Text(context.tr('me'),
           style: TextStyle(
             color: Colors.black,
             fontSize: 22,
@@ -134,8 +138,7 @@ class _MeViewState extends State<MeView> {
                 const SizedBox(height: 18),
                 _buildBodySummary(data),
                 const SizedBox(height: 22),
-                Text(
-                  "My Health",
+                Text(context.tr('myHealth'),
                   style: TextStyle(
                     color: TColor.primaryText,
                     fontSize: 21,
@@ -149,8 +152,8 @@ class _MeViewState extends State<MeView> {
                       child: _summaryCard(
                         icon: Icons.monitor_weight_rounded,
                         value: data.currentWeight > 0
-                            ? "${data.currentWeight.toStringAsFixed(1)} kg"
-                            : "-- kg",
+                            ? WeightUnitService.formatKg(data.currentWeight, weightUnit)
+                            : "-- ${WeightUnitService.label(weightUnit)}",
                         title: "Current Weight",
                       ),
                     ),
@@ -173,8 +176,8 @@ class _MeViewState extends State<MeView> {
                       child: _summaryCard(
                         icon: Icons.flag_rounded,
                         value: data.targetWeight > 0
-                            ? "${data.targetWeight.toStringAsFixed(1)} kg"
-                            : "-- kg",
+                            ? WeightUnitService.formatKg(data.targetWeight, weightUnit)
+                            : "-- ${WeightUnitService.label(weightUnit)}",
                         title: "Target Weight",
                       ),
                     ),
@@ -189,8 +192,7 @@ class _MeViewState extends State<MeView> {
                   ],
                 ),
                 const SizedBox(height: 24),
-                Text(
-                  "Manage",
+                Text(context.tr('manage'),
                   style: TextStyle(
                     color: TColor.primaryText,
                     fontSize: 21,
