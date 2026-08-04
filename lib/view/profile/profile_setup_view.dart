@@ -92,7 +92,7 @@ class _ProfileSetupViewState extends State<ProfileSetupView> {
     if (selectedGoal == "lose_weight" &&
         targetWeight >= currentWeight) {
       _showMessage(
-        "Target weight must be lower than current weight.",
+        context.tr('targetWeightLowerThanCurrent'),
       );
       return;
     }
@@ -100,7 +100,7 @@ class _ProfileSetupViewState extends State<ProfileSetupView> {
     if (selectedGoal == "gain_weight" &&
         targetWeight <= currentWeight) {
       _showMessage(
-        "Target weight must be higher than current weight.",
+        context.tr('targetWeightHigherThanCurrent'),
       );
       return;
     }
@@ -143,26 +143,25 @@ class _ProfileSetupViewState extends State<ProfileSetupView> {
 
   String? _validateNumber(
       String? value, {
-        required String fieldName,
+        required String fieldLabel,
         required double min,
         required double max,
       }) {
     final String text = value?.trim() ?? "";
 
     if (text.isEmpty) {
-      return "$fieldName is required";
+      return "${fieldLabel} ${context.tr('isRequired')}";
     }
 
-    final double? number =
-    double.tryParse(text);
+    final double? number = double.tryParse(text);
 
     if (number == null) {
-      return "Enter a valid $fieldName";
+      return "${context.tr('enterValid')} ${fieldLabel.toLowerCase()}";
     }
 
     if (number < min || number > max) {
-      return "$fieldName must be between "
-          "${min.toStringAsFixed(0)} and "
+      return "${fieldLabel} ${context.tr('mustBeBetween')} "
+          "${min.toStringAsFixed(0)} ${context.tr('and')} "
           "${max.toStringAsFixed(0)}";
     }
 
@@ -190,9 +189,9 @@ class _ProfileSetupViewState extends State<ProfileSetupView> {
           ),
         ),
 
-        title: const Text(
-          "Your Profile",
-          style: TextStyle(
+        title: Text(
+          context.tr('yourProfile'),
+          style: const TextStyle(
             color: Colors.black,
             fontSize: 22,
             fontWeight: FontWeight.w800,
@@ -220,9 +219,7 @@ class _ProfileSetupViewState extends State<ProfileSetupView> {
 
               const SizedBox(height: 28),
 
-              _sectionTitle(
-                "What is your goal?",
-              ),
+              _sectionTitle(context.tr('whatIsYourGoal')),
 
               const SizedBox(height: 14),
 
@@ -230,9 +227,7 @@ class _ProfileSetupViewState extends State<ProfileSetupView> {
 
               const SizedBox(height: 28),
 
-              _sectionTitle(
-                "Gender",
-              ),
+              _sectionTitle(context.tr('gender')),
 
               const SizedBox(height: 14),
 
@@ -240,24 +235,22 @@ class _ProfileSetupViewState extends State<ProfileSetupView> {
 
               const SizedBox(height: 28),
 
-              _sectionTitle(
-                "Body Information",
-              ),
+              _sectionTitle(context.tr('bodyInformation')),
 
               const SizedBox(height: 14),
 
               _inputField(
                 controller: _ageController,
-                label: "Age",
-                hint: "Enter your age",
-                suffix: "years",
+                label: context.tr('age'),
+                hint: context.tr('enterYourAge'),
+                suffix: context.tr('years'),
                 icon: Icons.cake_rounded,
                 keyboardType:
                 TextInputType.number,
                 validator: (value) {
                   return _validateNumber(
                     value,
-                    fieldName: "Age",
+                    fieldLabel: context.tr('age'),
                     min: 12,
                     max: 100,
                   );
@@ -268,8 +261,8 @@ class _ProfileSetupViewState extends State<ProfileSetupView> {
 
               _inputField(
                 controller: _heightController,
-                label: "Height",
-                hint: "Enter your height",
+                label: context.tr('height'),
+                hint: context.tr('enterYourHeight'),
                 suffix: "cm",
                 icon: Icons.height_rounded,
                 keyboardType:
@@ -280,7 +273,7 @@ class _ProfileSetupViewState extends State<ProfileSetupView> {
                 validator: (value) {
                   return _validateNumber(
                     value,
-                    fieldName: "Height",
+                    fieldLabel: context.tr('height'),
                     min: 100,
                     max: 250,
                   );
@@ -292,8 +285,8 @@ class _ProfileSetupViewState extends State<ProfileSetupView> {
               _inputField(
                 controller:
                 _currentWeightController,
-                label: "Current Weight",
-                hint: "Enter current weight",
+                label: context.tr('currentWeight'),
+                hint: context.tr('enterCurrentWeight'),
                 suffix: WeightUnitService.label(weightUnit),
                 icon:
                 Icons.monitor_weight_rounded,
@@ -305,7 +298,7 @@ class _ProfileSetupViewState extends State<ProfileSetupView> {
                 validator: (value) {
                   return _validateNumber(
                     value,
-                    fieldName: "Current weight",
+                    fieldLabel: context.tr('currentWeight'),
                     min: weightUnit == WeightUnitService.pounds ? 55 : 25,
                     max: weightUnit == WeightUnitService.pounds ? 1100 : 500,
                   );
@@ -317,8 +310,8 @@ class _ProfileSetupViewState extends State<ProfileSetupView> {
               _inputField(
                 controller:
                 _targetWeightController,
-                label: "Target Weight",
-                hint: "Enter target weight",
+                label: context.tr('targetWeight'),
+                hint: context.tr('enterTargetWeight'),
                 suffix: WeightUnitService.label(weightUnit),
                 icon: Icons.flag_rounded,
                 keyboardType:
@@ -329,7 +322,7 @@ class _ProfileSetupViewState extends State<ProfileSetupView> {
                 validator: (value) {
                   return _validateNumber(
                     value,
-                    fieldName: "Target weight",
+                    fieldLabel: context.tr('targetWeight'),
                     min: weightUnit == WeightUnitService.pounds ? 55 : 25,
                     max: weightUnit == WeightUnitService.pounds ? 1100 : 500,
                   );
@@ -375,8 +368,9 @@ class _ProfileSetupViewState extends State<ProfileSetupView> {
                       color: Colors.white,
                     ),
                   )
-                      : Text(context.tr('continue'),
-                    style: TextStyle(
+                      : Text(
+                    context.tr('continue'),
+                    style: const TextStyle(
                       fontSize: 18,
                       fontWeight:
                       FontWeight.w800,
@@ -431,11 +425,11 @@ class _ProfileSetupViewState extends State<ProfileSetupView> {
 
           const SizedBox(height: 16),
 
-          const Text(
-            "Tell us about yourself",
+          Text(
+            context.tr('tellUsAboutYourself'),
             textAlign: TextAlign.center,
 
-            style: TextStyle(
+            style: const TextStyle(
               color: Colors.white,
               fontSize: 22,
               fontWeight: FontWeight.w900,
@@ -445,8 +439,7 @@ class _ProfileSetupViewState extends State<ProfileSetupView> {
           const SizedBox(height: 8),
 
           Text(
-            "We will use this information "
-                "to calculate BMI and weight progress.",
+            context.tr('profileInfoUsage'),
             textAlign: TextAlign.center,
 
             style: TextStyle(
@@ -476,9 +469,9 @@ class _ProfileSetupViewState extends State<ProfileSetupView> {
     return Column(
       children: [
         _selectionTile(
-          title: "Lose Weight",
+          title: context.tr('loseWeightTitle'),
           subtitle:
-          "Reduce body weight and fat",
+          context.tr('reduceBodyWeightFat'),
           icon:
           Icons.trending_down_rounded,
           selected:
@@ -495,9 +488,9 @@ class _ProfileSetupViewState extends State<ProfileSetupView> {
         const SizedBox(height: 12),
 
         _selectionTile(
-          title: "Gain Weight",
+          title: context.tr('gainWeightTitle'),
           subtitle:
-          "Increase healthy body weight",
+          context.tr('increaseHealthyBodyWeight'),
           icon:
           Icons.trending_up_rounded,
           selected:
@@ -514,9 +507,9 @@ class _ProfileSetupViewState extends State<ProfileSetupView> {
         const SizedBox(height: 12),
 
         _selectionTile(
-          title: "Maintain Weight",
+          title: context.tr('maintainWeightTitle'),
           subtitle:
-          "Keep your weight stable",
+          context.tr('keepWeightStable'),
           icon:
           Icons.balance_rounded,
           selected:
@@ -538,7 +531,7 @@ class _ProfileSetupViewState extends State<ProfileSetupView> {
       children: [
         Expanded(
           child: _genderTile(
-            title: "Male",
+            title: context.tr('male'),
             icon: Icons.male_rounded,
             selected:
             selectedGender == "male",
@@ -554,7 +547,7 @@ class _ProfileSetupViewState extends State<ProfileSetupView> {
 
         Expanded(
           child: _genderTile(
-            title: "Female",
+            title: context.tr('female'),
             icon: Icons.female_rounded,
             selected:
             selectedGender == "female",
@@ -637,6 +630,8 @@ class _ProfileSetupViewState extends State<ProfileSetupView> {
                 children: [
                   Text(
                     title,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
                       fontSize: 16,
                       fontWeight:
@@ -648,6 +643,8 @@ class _ProfileSetupViewState extends State<ProfileSetupView> {
 
                   Text(
                     subtitle,
+                    maxLines: 3,
+                    overflow: TextOverflow.ellipsis,
                     style: TextStyle(
                       color:
                       TColor.sceondarText,
