@@ -10,6 +10,7 @@ import '../../service/profile_service.dart';
 import 'package:flutter/material.dart';
 
 import '../../common/color_extention.dart';
+import '../../common/responsive.dart';
 import '../../data/workout_day_view.dart';
 import '../../service/workout_progress_service.dart';
 import '../../service/workout_stats_service.dart';
@@ -18,6 +19,7 @@ import '../home/home_view.dart';
 import '../profile/me_view.dart';
 import '../plan/plan_view.dart';
 import '../schedule/schedule_view.dart';
+import '../exercise/exercise_view.dart';
 import '../reminder/sleep_reminder_view.dart';
 import '../reminder/meal_reminder_view.dart';
 import '../reminder/water_reminder_view.dart';
@@ -27,14 +29,18 @@ import '../../common_widget/app_drawer.dart';
 
 
 import '../../l10n/app_localizations.dart';
-class MenuView extends StatefulWidget {
+class MenuView extends StatefulWidget  {
   const MenuView({super.key});
 
   @override
   State<MenuView> createState() => _MenuViewState();
 }
 
-class _MenuViewState extends State<MenuView> {
+class _MenuViewState extends State<MenuView> with TickerProviderStateMixin {
+  double _rs(double value) => AppResponsive.size(context, value);
+  double _rh(double value) => AppResponsive.height(context, value);
+  double _rf(double value) => AppResponsive.font(context, value);
+
   final GlobalKey<ScaffoldState> _scaffoldKey =
   GlobalKey<ScaffoldState>();
 
@@ -79,10 +85,33 @@ class _MenuViewState extends State<MenuView> {
 
   late final List<Map<String, dynamic>> dayList;
 
-
+  late AnimationController _arrowController;
+  late Animation<Offset> _arrowAnimation;
+  late AnimationController _borderController;
   @override
   void initState() {
     super.initState();
+    _arrowController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 700),
+    );
+
+    _arrowAnimation = Tween<Offset>(
+      begin: Offset.zero,
+      end: const Offset(0.18, 0),
+    ).animate(
+      CurvedAnimation(
+        parent: _arrowController,
+        curve: Curves.easeInOut,
+      ),
+    );
+
+    _arrowController.repeat(reverse: true);
+
+    _borderController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 2200),
+    )..repeat();
 
     dayList = List.generate(30, (index) {
       final int day = index + 1;
@@ -92,10 +121,10 @@ class _MenuViewState extends State<MenuView> {
         "time": "5 min",
         "calorie": "${(68.1 + index).toStringAsFixed(1)} kcal",
         "image": index % 3 == 0
-            ? "assets/img/2.png"
+            ? "assets/img/pic1.png"
             : index % 3 == 1
-            ? "assets/img/3.png"
-            : "assets/img/4.png",
+            ? "assets/img/pic2.png"
+            : "assets/img/pic3.png",
       };
     });
 
@@ -197,78 +226,109 @@ class _MenuViewState extends State<MenuView> {
   }
 
   Future<void> _pickProfileImage() async {
-    final XFile? file = await _imagePicker.pickImage(
-      source: ImageSource.gallery,
-      imageQuality: 85,
-    );
+    try {
+      final XFile? pickedFile = await _imagePicker.pickImage(
+        source: ImageSource.gallery,
+        imageQuality: 85,
+      );
 
-    if (file == null) return;
+      if (pickedFile == null || !mounted) return;
 
-    await ProfileService.saveImagePath(file.path);
+      final File selectedFile = File(pickedFile.path);
+      if (!await selectedFile.exists()) return;
 
-    if (!mounted) return;
+      await ProfileService.saveImagePath(pickedFile.path);
 
-    setState(() {
-      profileImagePath = file.path;
-    });
+      if (!mounted) return;
+
+      setState(() {
+        profileImagePath = pickedFile.path;
+      });
+    } catch (error, stackTrace) {
+      debugPrint('Profile image picker error: $error');
+      debugPrintStack(stackTrace: stackTrace);
+    }
   }
 
   Future<void> _changeName() async {
     final TextEditingController controller =
-    TextEditingController(
-      text: profileName,
-    );
+    TextEditingController(text: profileName);
 
-    await showDialog<void>(
+    final String? newName = await showDialog<String>(
       context: context,
+      barrierDismissible: true,
       builder: (dialogContext) {
         return AlertDialog(
-          title: Text(context.tr('changeName')),
-
+          title: Text(dialogContext.tr('changeName')),
           content: TextField(
             controller: controller,
             autofocus: true,
-            decoration:  InputDecoration(
-              hintText: context.tr('enterName'),
-              border: OutlineInputBorder(),
+            textInputAction: TextInputAction.done,
+            decoration: InputDecoration(
+              hintText: dialogContext.tr('enterName'),
+              border: const OutlineInputBorder(),
             ),
-          ),
+            onSubmitted: (value) {
+              final String name = value.trim();
 
+              if (name.isEmpty) return;
+
+              Navigator.of(dialogContext).pop(name);
+            },
+          ),
           actions: [
             TextButton(
               onPressed: () {
-                Navigator.pop(dialogContext);
+                Navigator.of(dialogContext).pop();
               },
-              child: Text(context.tr('cancel')),
+              child: Text(dialogContext.tr('cancel')),
             ),
-
             ElevatedButton(
-              onPressed: () async {
-                final String name =
-                controller.text.trim();
+              onPressed: () {
+                final String name = controller.text.trim();
 
                 if (name.isEmpty) return;
 
-                await ProfileService.saveName(name);
-
-                if (!mounted) return;
-
-                setState(() {
-                  profileName = name;
-                });
-
-                if (dialogContext.mounted) {
-                  Navigator.pop(dialogContext);
-                }
+                Navigator.of(dialogContext).pop(name);
               },
-              child: Text(context.tr('save')),
+              child: Text(dialogContext.tr('save')),
             ),
           ],
         );
       },
     );
 
-    controller.dispose();
+    // এখানে controller.dispose() দেবে না।
+    // Dialog বন্ধ হওয়ার animation চলাকালে TextField controller ব্যবহার করে,
+    // তাই dispose করলে crash হচ্ছিল।
+
+    if (!mounted || newName == null) return;
+
+    final String cleanName = newName.trim();
+
+    if (cleanName.isEmpty) return;
+
+    await ProfileService.saveName(cleanName);
+
+    if (!mounted) return;
+
+    setState(() {
+      profileName = cleanName;
+    });
+  }
+
+  ImageProvider<Object> _profileImageProvider() {
+    final String? path = profileImagePath;
+
+    if (path != null && path.trim().isNotEmpty) {
+      final File imageFile = File(path);
+
+      if (imageFile.existsSync()) {
+        return FileImage(imageFile);
+      }
+    }
+
+    return const AssetImage('assets/img/u1.png');
   }
 
   Future<void> _loadWorkoutStats() async {
@@ -338,7 +398,7 @@ class _MenuViewState extends State<MenuView> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const SizedBox(height: 25),
+                    SizedBox(height: _rh(12)),
 
                     /// =================================================
                     /// TODAY'S REMINDERS
@@ -359,22 +419,109 @@ class _MenuViewState extends State<MenuView> {
 
                       child: Row(
                         children: [
-                          Text(context.tr('stage1'),
-                            style: TextStyle(
-                              fontSize: 23,
-                              color: TColor.primaryText,
-                              fontWeight: FontWeight.w800,
+                          // LEFT SIDE: Stage 1 + Start Strong
+                          Expanded(
+                            child: Row(
+                              children: [
+                                Text(
+                                  context.tr('stage1'),
+                                  style: TextStyle(
+                                    fontSize: _rf(23),
+                                    color: TColor.primaryText,
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                                ),
+
+                                SizedBox(width: _rs(8)),
+
+                                Flexible(
+                                  child: Text(
+                                    context.tr('startStrong'),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(
+                                      fontSize: _rf(15),
+                                      color: TColor.primary,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
 
-                          const SizedBox(width: 10),
-
-                          Text(context.tr('startStrong'),
-                            style: TextStyle(
-                              fontSize: 16,
-                              color: TColor.primary,
-                              fontWeight: FontWeight.w600,
-                            ),
+                          // RIGHT SIDE: More Exercises
+                          AnimatedBuilder(
+                            animation: _borderController,
+                            builder: (context, child) {
+                              return Container(
+                                padding: const EdgeInsets.all(1.8),
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(999),
+                                  gradient: SweepGradient(
+                                    transform: GradientRotation(
+                                      _borderController.value * 2 * 3.141592653589793,
+                                    ),
+                                    colors: [
+                                      TColor.primary.withOpacity(0.18),
+                                      TColor.primary,
+                                      const Color(0xFFFF9818),
+                                      TColor.primary,
+                                      TColor.primary.withOpacity(0.18),
+                                    ],
+                                  ),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: TColor.primary.withOpacity(0.18),
+                                      blurRadius: 8,
+                                      spreadRadius: 0.5,
+                                    ),
+                                  ],
+                                ),
+                                child: Material(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(999),
+                                  clipBehavior: Clip.antiAlias,
+                                  child: InkWell(
+                                    onTap: () {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (_) => const ExerciseView(),
+                                        ),
+                                      );
+                                    },
+                                    borderRadius: BorderRadius.circular(999),
+                                    child: Padding(
+                                      padding: EdgeInsets.symmetric(
+                                        horizontal: _rs(10),
+                                        vertical: _rh(7),
+                                      ),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Text(
+                                            'MORE EXERCISES',
+                                            style: TextStyle(
+                                              color: TColor.primary,
+                                              fontSize: _rf(9.5),
+                                              fontWeight: FontWeight.w800,
+                                              letterSpacing: 0.15,
+                                            ),
+                                          ),
+                                          SizedBox(width: _rs(4)),
+                                          Icon(
+                                            Icons.arrow_forward_rounded,
+                                            size: _rs(14),
+                                            color: TColor.primary,
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              );
+                            },
                           ),
                         ],
                       ),
@@ -458,7 +605,7 @@ class _MenuViewState extends State<MenuView> {
                                 Expanded(
                                   child: Text(context.tr('full30DaysPlan'),
                                     style: TextStyle(
-                                      fontSize: 17,
+                                      fontSize: _rf(15),
                                       color: TColor.primary,
                                       fontWeight: FontWeight.w700,
                                     ),
@@ -532,11 +679,11 @@ class _MenuViewState extends State<MenuView> {
         ),
 
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(
-            22,
-            18,
-            22,
-            22,
+          padding: EdgeInsets.fromLTRB(
+            _rs(18),
+            _rh(8),
+            _rs(18),
+            _rh(12),
           ),
 
           child: Column(
@@ -626,17 +773,14 @@ class _MenuViewState extends State<MenuView> {
                     child: GestureDetector(
                       onTap: _pickProfileImage,
                       child: CircleAvatar(
-                        radius: 37,
+                        radius: _rs(32),
                         backgroundColor: Colors.white,
-                        backgroundImage: profileImagePath != null
-                            ? FileImage(File(profileImagePath!))
-                            : const AssetImage("assets/img/u1.png")
-                        as ImageProvider,
+                        backgroundImage: _profileImageProvider(),
                       ),
                     ),
                   ),
 
-                  const SizedBox(width: 15),
+                  SizedBox(width: _rs(12)),
 
                   Expanded(
                     child: Column(
@@ -646,9 +790,9 @@ class _MenuViewState extends State<MenuView> {
                       children: [
                         Text(
                           greeting,
-                          style: const TextStyle(
+                          style:  TextStyle(
                             color: Colors.white,
-                            fontSize: 15,
+                            fontSize: _rf(13),
                             fontWeight: FontWeight.w500,
                           ),
                         ),
@@ -659,7 +803,7 @@ class _MenuViewState extends State<MenuView> {
                           currentDate,
                           style: TextStyle(
                             color: Colors.white.withOpacity(0.85),
-                            fontSize: 13,
+                            fontSize: _rf(11.5),
                             fontWeight: FontWeight.w500,
                           ),
                         ),
@@ -675,9 +819,9 @@ class _MenuViewState extends State<MenuView> {
                                       : profileName,
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
-                                  style: const TextStyle(
+                                  style:  TextStyle(
                                     color: Colors.white,
-                                    fontSize: 27,
+                                    fontSize: _rf(23),
                                     fontWeight: FontWeight.w800,
                                   ),
                                 ),
@@ -692,12 +836,12 @@ class _MenuViewState extends State<MenuView> {
                           ),
                         ),
 
-                        const SizedBox(height: 9),
+                        SizedBox(height: _rh(4)),
 
                         Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 13,
-                            vertical: 7,
+                          padding: EdgeInsets.symmetric(
+                            horizontal: _rs(11),
+                            vertical: _rh(5),
                           ),
 
                           decoration: BoxDecoration(
@@ -709,7 +853,7 @@ class _MenuViewState extends State<MenuView> {
                           child: Text(context.tr('keepPushing'),
                             style: TextStyle(
                               color: Colors.white,
-                              fontSize: 12,
+                              fontSize: _rf(10.5),
                             ),
                           ),
                         ),
@@ -719,7 +863,7 @@ class _MenuViewState extends State<MenuView> {
                 ],
               ),
 
-              const SizedBox(height: 25),
+              SizedBox(height: _rh(12)),
 
               /// =================================================
               /// STATS
@@ -780,10 +924,10 @@ class _MenuViewState extends State<MenuView> {
     required String bottom,
   }) {
     return Container(
-      height: 78,
-      padding: const EdgeInsets.symmetric(
-        horizontal: 8,
-        vertical: 8,
+      height: _rh(68),
+      padding: EdgeInsets.symmetric(
+        horizontal: _rs(7),
+        vertical: _rh(6),
       ),
       decoration: BoxDecoration(
         color: Colors.white.withOpacity(0.14),
@@ -795,8 +939,8 @@ class _MenuViewState extends State<MenuView> {
       child: Row(
         children: [
           Container(
-            width: 30,
-            height: 30,
+            width: _rs(27),
+            height: _rs(27),
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               color: TColor.primary.withOpacity(0.55),
@@ -804,7 +948,7 @@ class _MenuViewState extends State<MenuView> {
             child: Icon(
               icon,
               color: Colors.white,
-              size: 16,
+              size: _rf(14),
             ),
           ),
           const SizedBox(width: 6),
@@ -818,9 +962,9 @@ class _MenuViewState extends State<MenuView> {
                   title,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
+                  style:  TextStyle(
                     color: Colors.white,
-                    fontSize: 9.5,
+                    fontSize: _rf(8.8),
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -829,9 +973,9 @@ class _MenuViewState extends State<MenuView> {
                   value,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
+                  style:  TextStyle(
                     color: Colors.white,
-                    fontSize: 17,
+                    fontSize: _rf(15),
                     fontWeight: FontWeight.w800,
                   ),
                 ),
@@ -842,7 +986,7 @@ class _MenuViewState extends State<MenuView> {
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
                     color: Colors.white.withOpacity(0.8),
-                    fontSize: 8.5,
+                    fontSize: _rf(8),
                     fontWeight: FontWeight.w500,
                   ),
                 ),
@@ -1026,7 +1170,7 @@ class _MenuViewState extends State<MenuView> {
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
                 color: TColor.primaryText,
-                fontSize: 13,
+                fontSize: _rf(11.5),
                 fontWeight: FontWeight.w900,
               ),
             ),
@@ -1037,7 +1181,7 @@ class _MenuViewState extends State<MenuView> {
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
                 color: iconColor,
-                fontSize: 10.5,
+                fontSize: _rf(8.8),
                 fontWeight: FontWeight.w800,
               ),
             ),
@@ -1134,7 +1278,7 @@ class _MenuViewState extends State<MenuView> {
 
                   child: Text(context.tr('myPlan'),
                     style: TextStyle(
-                      fontSize: 13,
+                      fontSize: _rf(11.5),
                       fontWeight: FontWeight.w700,
                     ),
                   ),
@@ -1166,7 +1310,7 @@ class _MenuViewState extends State<MenuView> {
                   context.tr('healthyJourney'),
                   style: TextStyle(
                     color: TColor.primaryText,
-                    fontSize: 13,
+                    fontSize: _rf(11.5),
                     height: 1.4,
                   ),
                 ),
@@ -1202,7 +1346,7 @@ class _MenuViewState extends State<MenuView> {
                       context.tr('adjustPlan'),
                       style: TextStyle(
                         fontWeight: FontWeight.w600,
-                        fontSize: 12,
+                        fontSize: _rf(10.5),
                       ),
                     ),
 
@@ -1234,32 +1378,21 @@ class _MenuViewState extends State<MenuView> {
   /// =====================================================
 
   Widget _buildDayList() {
-    return SizedBox(
-      /// প্রয়োজন হলে 500 কম/বেশি করতে পারো
-      height: 500,
+    return ListView.builder(
+      padding: EdgeInsets.zero,
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: dayList.length,
+      itemBuilder: (context, index) {
+        final Map<String, dynamic> item = dayList[index];
+        final bool active = index == selectedDay;
 
-      child: ListView.builder(
-        padding: EdgeInsets.zero,
-
-        /// Day section আলাদাভাবে scroll করবে
-        physics: const BouncingScrollPhysics(),
-
-        /// এখানে 30টি item আছে
-        itemCount: dayList.length,
-
-        itemBuilder: (context, index) {
-          final item = dayList[index];
-
-          final bool active =
-              index == selectedDay;
-
-          return _buildDayCard(
-            item: item,
-            index: index,
-            active: active,
-          );
-        },
-      ),
+        return _buildDayCard(
+          item: item,
+          index: index,
+          active: active,
+        );
+      },
     );
   }
 
@@ -1271,13 +1404,43 @@ class _MenuViewState extends State<MenuView> {
     required int index,
     required bool active,
   }) {
-
     final int dayNumber = index + 1;
+    final String imagePath = item["image"].toString();
+
+    final bool isPic2 = imagePath.contains("pic2");
+    final bool isPic3 = imagePath.contains("pic3");
+
+    final double cardHeight = active ? 195 : 150;
+    final double timelineHeight = active ? 207 : 162;
+
+    double imageWidth = active ? 145 : 110;
+    double imageHeight = active ? 220 : 145;
+    double imageRight = active ? -10 : 2;
+    double? imageTop = active ? -15 : -8;
+    double? imageBottom;
+    double textRightPadding = active ? 118 : 88;
+
+    if (isPic2) {
+      imageWidth = active ? 205 : 145;
+      imageHeight = active ? 145 : 100;
+      imageRight = active ? -12 : -5;
+      imageTop = null;
+      imageBottom = active ? 22 : 16;
+      textRightPadding = active ? 142 : 104;
+    }
+
+    if (isPic3) {
+      imageWidth = active ? 205 : 145;
+      imageHeight = active ? 250 : 168;
+      imageRight = active ? -24 : -8;
+      imageTop = active ? -45 : -8;
+      imageBottom = null;
+      textRightPadding = active ? 136 : 100;
+    }
 
     return FutureBuilder<WorkoutProgress>(
       future: WorkoutProgressService.getProgress(dayNumber),
       builder: (context, snapshot) {
-
         final WorkoutProgress progress =
             snapshot.data ??
                 const WorkoutProgress(
@@ -1288,25 +1451,13 @@ class _MenuViewState extends State<MenuView> {
                 );
 
         return Padding(
-          padding: const EdgeInsets.fromLTRB(
-            20,
-            0,
-            20,
-            15,
-          ),
-
+          padding: const EdgeInsets.fromLTRB(20, 8, 20, 12),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
-
             children: [
-              /// =================================================
-              /// LEFT TIMELINE
-              /// =================================================
-
               SizedBox(
-                width: 45,
-                height: active ? 205 : 145,
-
+                width: 36,
+                height: timelineHeight,
                 child: Column(
                   children: [
                     GestureDetector(
@@ -1315,29 +1466,23 @@ class _MenuViewState extends State<MenuView> {
                           selectedDay = index;
                         });
                       },
-
                       child: Container(
-                        width: 27,
-                        height: 27,
-
+                        width: 22,
+                        height: 22,
                         padding: const EdgeInsets.all(4),
-
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-
+                          color: Colors.white,
                           border: Border.all(
                             width: 2,
-
                             color: active
                                 ? TColor.primary
-                                : Colors.black12,
+                                : const Color(0xffD8D2E4),
                           ),
                         ),
-
-                        child: Container(
+                        child: DecoratedBox(
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
-
                             color: active
                                 ? TColor.primary
                                 : Colors.transparent,
@@ -1345,7 +1490,6 @@ class _MenuViewState extends State<MenuView> {
                         ),
                       ),
                     ),
-
                     if (index != dayList.length - 1)
                       Expanded(
                         child: Container(
@@ -1356,254 +1500,313 @@ class _MenuViewState extends State<MenuView> {
                   ],
                 ),
               ),
-
-
-              /// =================================================
-              /// DAY CARD
-              /// =================================================
-
               Expanded(
-                child: InkWell(
-                  borderRadius: BorderRadius.circular(22),
-
-                  onTap: () {
-                    setState(() {
-                      selectedDay = index;
-                    });
-                  },
-
-                  child: AnimatedContainer(
-                    duration: const Duration(
-                      milliseconds: 250,
-                    ),
-
-                    height: active ? 190 : 130,
-
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(22),
-
-                      gradient: active
-                          ? LinearGradient(
-                        colors: [
-                          TColor.primary,
-                          const Color(0xff8748E8),
-                        ],
-                      )
-                          : LinearGradient(
-                        colors: [
-                          TColor.purpleSoft,
-                          const Color(0xffFBF9FF),
-                        ],
-                      ),
-                    ),
-
-                    child: Stack(
-                      children: [
-                        /// PERSON IMAGE
-
-                        Positioned(
-                          right: 0,
-                          bottom: 0,
-
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(22),
-
-                            child: Image.asset(
-                              item["image"],
-
-                              width: active ? 155 : 125,
-                              height: active ? 175 : 125,
-
-                              fit: BoxFit.cover,
-                            ),
-                          ),
-                        ),
-
-                        /// DAY INFORMATION
-
-                        Padding(
-                          padding: const EdgeInsets.all(20),
-
-                          child: Column(
-                            crossAxisAlignment:
-                            CrossAxisAlignment.start,
-
-                            children: [
-                              Text(
-                                '${context.tr('day')} ${index + 1}',
-
-                                style: TextStyle(
-                                  color: active
-                                      ? Colors.white
-                                      : TColor.primaryText,
-
-                                  fontSize: active ? 25 : 23,
-
-                                  fontWeight: FontWeight.w800,
-                                ),
+                child: SizedBox(
+                  height: cardHeight,
+                  child: Stack(
+                    clipBehavior: Clip.none,
+                    children: [
+                      Positioned.fill(
+                        child: InkWell(
+                          borderRadius: BorderRadius.circular(22),
+                          onTap: () {
+                            setState(() {
+                              selectedDay = index;
+                            });
+                          },
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 250),
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(22),
+                              gradient: active
+                                  ? const LinearGradient(
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                                colors: [
+                                  Color(0xff4B0FA8),
+                                  Color(0xff742BE6),
+                                  Color(0xff9A49F2),
+                                ],
+                              )
+                                  : const LinearGradient(
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                                colors: [
+                                  Color(0xffF4EDFF),
+                                  Color(0xffFBF9FF),
+                                ],
                               ),
-
-                              const SizedBox(height: 8),
-
-                              Text(
-                                '5 ${context.tr('minuteShort')} • ${(68.1 + index).toStringAsFixed(1)} ${context.tr('kcal')}',
-
-
-
-                                style: TextStyle(
+                              boxShadow: [
+                                BoxShadow(
                                   color: active
-                                      ? Colors.white
-                                      : TColor.primaryText,
-
-                                  fontSize: 14,
-                                ),
-                              ),
-                              if (progress.started) ...[
-                                const SizedBox(height: 8),
-
-                                Row(
-                                  children: [
-                                    Expanded(
-                                      child: Text(
-                                        progress.completed
-                                            ? context.tr('workoutCompleted')
-                                            : progress.progressText,
-                                        style: TextStyle(
-                                          color: active
-                                              ? Colors.white70
-                                              : TColor.primaryText,
-                                          fontSize: 11,
-                                          fontWeight: FontWeight.w600,
-                                        ),
-                                      ),
-                                    ),
-
-                                    Text(
-                                      "${(progress.progress * 100).round()}%",
-                                      style: TextStyle(
-                                        color: progress.completed
-                                            ? Colors.green
-                                            : active
-                                            ? Colors.white
-                                            : TColor.primary,
-                                        fontSize: 11,
-                                        fontWeight: FontWeight.w800,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-
-                                const SizedBox(height: 7),
-
-                                ClipRRect(
-                                  borderRadius: BorderRadius.circular(20),
-
-                                  child: LinearProgressIndicator(
-                                    value: progress.progress,
-                                    minHeight: 6,
-
-                                    backgroundColor: active
-                                        ? Colors.white24
-                                        : TColor.primaryLight,
-
-                                    valueColor: AlwaysStoppedAnimation<Color>(
-                                      progress.completed
-                                          ? Colors.green
-                                          : active
-                                          ? Colors.white
-                                          : TColor.primary,
-                                    ),
-                                  ),
+                                      ? const Color(0xff5D20C8).withOpacity(0.22)
+                                      : Colors.black.withOpacity(0.05),
+                                  blurRadius: active ? 16 : 8,
+                                  offset: const Offset(0, 6),
                                 ),
                               ],
-                              /// START button শুধু selected Day-তে থাকবে
-
-                              if (active) ...[
-                                const Spacer(),
-
-                                InkWell(
-                                  borderRadius:
-                                  BorderRadius.circular(30),
-                                  onTap: () async {
-                                    await Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (_) => WorkoutDayView(
-                                          dayNumber: index + 1,
+                            ),
+                            child: Stack(
+                              clipBehavior: Clip.none,
+                              children: [
+                                if (active)
+                                  Positioned(
+                                    right: -28,
+                                    bottom: -48,
+                                    child: Container(
+                                      width: 178,
+                                      height: 178,
+                                      decoration: BoxDecoration(
+                                        shape: BoxShape.circle,
+                                        color: Colors.white.withOpacity(0.06),
+                                        border: Border.all(
+                                          color: Colors.white.withOpacity(0.08),
                                         ),
                                       ),
-                                    );
-
-                                    if (!mounted) return;
-
-                                    await _loadWorkoutStats();
-
-                                    setState(() {});
-                                  },
-
-                                  child: Container(
-                                    width: 185,
-                                    height: 48,
-
-                                    decoration: BoxDecoration(
-                                      color: Colors.white,
-
-                                      borderRadius:
-                                      BorderRadius.circular(30),
                                     ),
-
-                                    child: Row(
-                                      mainAxisAlignment:
-                                      MainAxisAlignment.center,
-
-                                      children: [
-                                        Expanded(
-                                          child: Center(
-                                            child:  Text(
-                                              progress.completed
-                                                  ? context.tr('repeat')
-                                                  : progress.started
-                                                  ? context.tr('continueUpper')
-                                                  : context.tr('startUpper'),
-                                              style: const TextStyle(
-                                                color: Colors.black,
-                                                fontSize: 17,
-                                                fontWeight: FontWeight.w800,
-                                              ),
-                                            ),
-                                          ),
+                                  ),
+                                if (active)
+                                  Positioned(
+                                    right: 10,
+                                    top: 35,
+                                    child: SizedBox(
+                                      width: 76,
+                                      height: 82,
+                                      child: CustomPaint(
+                                        painter: _WorkoutDotsPainter(
+                                          color: Colors.white.withOpacity(0.10),
                                         ),
-
-                                        Container(
-                                          margin:
-                                          const EdgeInsets.only(
-                                            right: 6,
+                                      ),
+                                    ),
+                                  ),
+                                Positioned(
+                                  right: isPic2
+                                      ? (active ? 20 : 14)
+                                      : isPic3
+                                      ? (active ? 18 : 12)
+                                      : (active ? 10 : 8),
+                                  bottom: isPic2
+                                      ? (active ? 17 : 11)
+                                      : (active ? 4 : 3),
+                                  child: Container(
+                                    width: isPic2
+                                        ? (active ? 100 : 72)
+                                        : isPic3
+                                        ? (active ? 88 : 65)
+                                        : (active ? 92 : 68),
+                                    height: active ? 13 : 9,
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(50),
+                                      color: Colors.black.withOpacity(
+                                        active ? 0.18 : 0.08,
+                                      ),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Colors.black.withOpacity(
+                                            active ? 0.20 : 0.08,
                                           ),
-
-                                          width: 35,
-                                          height: 35,
-
-                                          decoration: BoxDecoration(
-                                            shape: BoxShape.circle,
-                                            color: TColor.primary,
-                                          ),
-
-                                          child: const Icon(
-                                            Icons.arrow_forward_ios,
-                                            color: Colors.white,
-                                            size: 16,
-                                          ),
+                                          blurRadius: active ? 14 : 8,
+                                          spreadRadius: 1,
                                         ),
                                       ],
                                     ),
                                   ),
                                 ),
+                                Padding(
+                                  padding: EdgeInsets.fromLTRB(
+                                    16,
+                                    active ? 16 : 12,
+                                    textRightPadding,
+                                    active ? 66 : 10,
+                                  ),
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        '${context.tr('day')} ${index + 1}',
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: TextStyle(
+                                          color: active ? Colors.white : TColor.primaryText,
+                                          fontSize: active ? 23 : 18.5,
+                                          fontWeight: FontWeight.w900,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        '5 ${context.tr('minuteShort')}  •  '
+                                            '${(68.1 + index).toStringAsFixed(1)} '
+                                            '${context.tr('kcal')}',
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: TextStyle(
+                                          color: active
+                                              ? Colors.white.withOpacity(0.86)
+                                              : TColor.primaryText,
+                                          fontSize: active ? 11.5 : 10.5,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                      if (progress.started) ...[
+                                        const SizedBox(height: 7),
+                                        Row(
+                                          children: [
+                                            Expanded(
+                                              child: Text(
+                                                progress.completed
+                                                    ? context.tr('workoutCompleted')
+                                                    : progress.progressText,
+                                                maxLines: 1,
+                                                overflow: TextOverflow.ellipsis,
+                                                style: TextStyle(
+                                                  color: active
+                                                      ? Colors.white.withOpacity(0.78)
+                                                      : TColor.sceondarText,
+                                                  fontSize: _rf(8.8),
+                                                  fontWeight: FontWeight.w600,
+                                                ),
+                                              ),
+                                            ),
+                                            const SizedBox(width: 4),
+                                            Text(
+                                              '${(progress.progress * 100).round()}%',
+                                              style: TextStyle(
+                                                color: progress.completed
+                                                    ? const Color(0xff63F96D)
+                                                    : active
+                                                    ? const Color(0xff73F27A)
+                                                    : TColor.primary,
+                                                fontSize: _rf(8.8),
+                                                fontWeight: FontWeight.w900,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                        const SizedBox(height: 5),
+                                        ClipRRect(
+                                          borderRadius: BorderRadius.circular(20),
+                                          child: LinearProgressIndicator(
+                                            value: progress.progress,
+                                            minHeight: 4,
+                                            backgroundColor: active
+                                                ? Colors.white.withOpacity(0.22)
+                                                : TColor.primaryLight,
+                                            valueColor: AlwaysStoppedAnimation<Color>(
+                                              progress.completed
+                                                  ? const Color(0xff55ED63)
+                                                  : active
+                                                  ? const Color(0xff74F37A)
+                                                  : TColor.primary,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ],
+                                  ),
+                                ),
+                                if (active)
+                                  Positioned(
+                                    left: 16,
+                                    bottom: 14,
+                                    child: InkWell(
+                                      borderRadius: BorderRadius.circular(28),
+                                      onTap: () async {
+                                        await Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (_) => WorkoutDayView(
+                                              dayNumber: index + 1,
+                                            ),
+                                          ),
+                                        );
+                                        if (!mounted) return;
+                                        await _loadWorkoutStats();
+                                        setState(() {});
+                                      },
+                                      child: Container(
+                                        width: isPic2 ? 142 : 150,
+                                        height: 42,
+                                        padding: const EdgeInsets.only(left: 12),
+                                        decoration: BoxDecoration(
+                                          color: Colors.white,
+                                          borderRadius: BorderRadius.circular(28),
+                                          boxShadow: [
+                                            BoxShadow(
+                                              color: Colors.black.withOpacity(0.10),
+                                              blurRadius: 8,
+                                              offset: const Offset(0, 3),
+                                            ),
+                                          ],
+                                        ),
+                                        child: Row(
+                                          children: [
+                                            Expanded(
+                                              child: Text(
+                                                progress.completed
+                                                    ? context.tr('repeat')
+                                                    : progress.started
+                                                    ? context.tr('continueUpper')
+                                                    : context.tr('startUpper'),
+                                                maxLines: 1,
+                                                overflow: TextOverflow.ellipsis,
+                                                textAlign: TextAlign.center,
+                                                style:  TextStyle(
+                                                  color: Colors.black,
+                                                  fontSize: _rf(11.5),
+                                                  fontWeight: FontWeight.w900,
+                                                ),
+                                              ),
+                                            ),
+                                            Container(
+                                              margin: const EdgeInsets.all(4),
+                                              width: 32,
+                                              height: 32,
+                                              decoration: BoxDecoration(
+                                                shape: BoxShape.circle,
+                                                color: TColor.primary,
+                                              ),
+                                              child: SlideTransition(
+                                                position: _arrowAnimation,
+                                                child: const Icon(
+                                                  Icons.arrow_forward_ios_rounded,
+                                                  color: Colors.white,
+                                                  size: 13,
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  ),
                               ],
-                            ],
+                            ),
                           ),
                         ),
-                      ],
-                    ),
+                      ),
+                      Positioned(
+                        right: imageRight,
+                        top: imageTop,
+                        bottom: imageBottom,
+                        child: IgnorePointer(
+                          child: Image.asset(
+                            imagePath,
+                            width: imageWidth,
+                            height: imageHeight,
+                            fit: BoxFit.contain,
+                            alignment: Alignment.bottomCenter,
+                            filterQuality: FilterQuality.high,
+                            errorBuilder: (_, __, ___) {
+                              return Icon(
+                                Icons.fitness_center_rounded,
+                                color: active ? Colors.white70 : TColor.primary,
+                                size: 50,
+                              );
+                            },
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ),
@@ -1613,6 +1816,7 @@ class _MenuViewState extends State<MenuView> {
       },
     );
   }
+
   /// =====================================================
   /// BOTTOM NAVIGATION
   /// =====================================================
@@ -1749,4 +1953,39 @@ class _MenuViewState extends State<MenuView> {
     );
   }
 
+  @override
+  void dispose() {
+    _arrowController.dispose();
+    _borderController.dispose();
+    super.dispose();
+  }
+} // <-- Class শেষ
+
+
+
+class _WorkoutDotsPainter extends CustomPainter {
+  const _WorkoutDotsPainter({required this.color});
+
+  final Color color;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final Paint paint = Paint()..color = color;
+    const double gap = 10;
+    const double radius = 1.6;
+
+    for (double y = 0; y <= size.height; y += gap) {
+      for (double x = 0; x <= size.width; x += gap) {
+        canvas.drawCircle(Offset(x, y), radius, paint);
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _WorkoutDotsPainter oldDelegate) {
+    return oldDelegate.color != color;
+  }
+
+
 }
+

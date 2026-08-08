@@ -155,6 +155,8 @@ class _MeViewState extends State<MeView> {
           _buildProfileHeader(data),
           const SizedBox(height: 18),
           _buildBodySummary(data),
+          const SizedBox(height: 12),
+          _buildSetupSummary(data),
           const SizedBox(height: 22),
           Text(
             context.tr('myHealth'),
@@ -378,25 +380,75 @@ class _MeViewState extends State<MeView> {
         children: [
           Expanded(
             child: _smallInfo(
-              context.tr('age'),
-              data.age > 0 ? "${data.age}" : "--",
-            ),
-          ),
-          _divider(),
-          Expanded(
-            child: _smallInfo(
               context.tr('height'),
               data.heightCm > 0
-                  ? "${data.heightCm.toStringAsFixed(0)} cm"
-                  : "--",
+                  ? '${data.heightCm.toStringAsFixed(0)} cm'
+                  : '--',
             ),
           ),
           _divider(),
           Expanded(
             child: _smallInfo(
-              context.tr('bmiStatus'),
-              _bmiStatusText(data.bmiStatus),
+              context.tr('currentWeight'),
+              data.currentWeight > 0
+                  ? WeightUnitService.formatKg(data.currentWeight, weightUnit)
+                  : '--',
             ),
+          ),
+          _divider(),
+          Expanded(
+            child: _smallInfo(
+              context.tr('targetWeight'),
+              data.targetWeight > 0
+                  ? WeightUnitService.formatKg(data.targetWeight, weightUnit)
+                  : '--',
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSetupSummary(UserProfileData data) {
+    String pretty(String value) {
+      if (value.isEmpty) return '--';
+      return value
+          .split('_')
+          .map((part) => part.isEmpty
+              ? part
+              : '${part[0].toUpperCase()}${part.substring(1)}')
+          .join(' ');
+    }
+
+    final String reminder = data.workoutReminderEnabled
+        ? TimeOfDay(
+            hour: data.workoutReminderHour,
+            minute: data.workoutReminderMinute,
+          ).format(context)
+        : 'Off';
+
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(21),
+      ),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: _smallInfo('Activity', pretty(data.activityLevel)),
+              ),
+              _divider(),
+              Expanded(
+                child: _smallInfo('Fitness level', pretty(data.fitnessLevel)),
+              ),
+              _divider(),
+              Expanded(
+                child: _smallInfo('Workout reminder', reminder),
+              ),
+            ],
           ),
         ],
       ),

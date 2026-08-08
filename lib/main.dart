@@ -2,10 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
 import 'package:workoutfitnesstool/common/color_extention.dart';
+import 'package:workoutfitnesstool/common/responsive.dart';
 import 'package:workoutfitnesstool/service/notification_service.dart';
 import 'package:workoutfitnesstool/service/language_service.dart';
 import 'package:workoutfitnesstool/l10n/app_localizations.dart';
-import 'package:workoutfitnesstool/view/login/on_boarding_view.dart';
+import 'package:workoutfitnesstool/view/login/startup_view.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -46,13 +47,18 @@ class MyApp extends StatelessWidget {
       ],
       title: 'Fitness Workout',
       debugShowCheckedModeBanner: false,
+      builder: (context, child) {
+        return ResponsiveMediaQuery(
+          child: child ?? const SizedBox.shrink(),
+        );
+      },
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(
           seedColor: TColor.primary,
         ),
         useMaterial3: false,
       ),
-      home: const OnBoardingView(),
+      home: const StartupView(),
         );
       },
     );

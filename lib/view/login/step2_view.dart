@@ -30,16 +30,16 @@ class _Step1ViewState extends State<Step2View> {
             Navigator.pop(context);
           },
               icon: Image.asset("assets/img/back.png",
-              width: 125,
-              height: 125,
+                width: 125,
+                height: 125,
                 color: Colors.black,
               )),
           title: Text("Step 2 of 3",
-          style: TextStyle(
-              color: TColor.primary,
-              fontSize: 20,
-              fontWeight: FontWeight.w700),
-        ),),
+            style: TextStyle(
+                color: TColor.primary,
+                fontSize: 20,
+                fontWeight: FontWeight.w700),
+          ),),
         body:
 
 
@@ -90,9 +90,9 @@ class _Step1ViewState extends State<Step2View> {
                 padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 25),
                 child: RoundButton(
                   title: 'Next', onPressed: () {
-                    Navigator.push(context, MaterialPageRoute(builder: (context) =>
-                    const Step3View()
-                    ));
+                  Navigator.push(context, MaterialPageRoute(builder: (context) =>
+                  const Step3View()
+                  ));
                 },),
               ),
 

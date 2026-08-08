@@ -1,301 +1,679 @@
 final Map<String, Map<String, dynamic>> exerciseDetailsData = {
+
   "MOUNTAIN CLIMBER": {
+
     "name": "MOUNTAIN CLIMBER",
-    "gif": "assets/gif/mountain_climber.gif",
+
+    "nameKey": "mountainClimber",
+
+    "gif": "assets/webp/mountainclimber.webp",
+
+
 
     // এখানে Mountain Climber ভিডিওর YouTube ID বসাবে
+
     "youtubeId": "kLh-uczlPLg",
 
+
+
     "value": "00:30",
+
     "difficulty": "Beginner",
+
     "calorie": "6 kcal",
 
+
+
+    "instructionKey": "mountainClimberInstruction",
+
+    "benefitKey": "mountainClimberBenefit",
+
+
+
     "instruction":
+
     "Start in the push-up position. Bring your right knee toward your chest while keeping your left leg straight. Quickly switch from one leg to the other.",
 
+
+
     "benefit":
+
     "This exercise strengthens your core and improves cardiovascular endurance.",
 
+
+
     "focusAreas": [
-      "Abs",
-      "Glutes",
-      "Lower back",
+
+      "abs",
+
+      "glutes",
+
+      "lowerBack",
+
     ],
 
+
+
     "tips": [
-      "Keep your back straight.",
-      "Tighten your core.",
-      "Move at a controlled speed.",
+
+      "mountainClimberTip1",
+
+      "mountainClimberTip2",
+
+      "mountainClimberTip3",
+
     ],
+
   },
+
+
 
   "SQUATS": {
+
     "name": "SQUATS",
-    "gif": "assets/gif/squats.gif",
+
+    "nameKey": "squats",
+
+    "gif": "assets/webp/squats.webp",
+
+
 
     // এখানে Squats ভিডিওর YouTube ID বসাবে
+
     "youtubeId": "kLh-uczlPLg",
 
+
+
     "value": "x16",
+
     "difficulty": "Beginner",
+
     "calorie": "8 kcal",
 
+
+
+    "instructionKey": "squatsInstruction",
+
+    "benefitKey": "squatsBenefit",
+
+
+
     "instruction":
+
     "Stand with your feet shoulder-width apart. Push your hips backward, bend your knees and lower your body. Then return to the standing position.",
 
+
+
     "benefit":
+
     "Squats strengthen your legs, hips and lower body muscles.",
 
+
+
     "focusAreas": [
-      "Quads",
-      "Glutes",
-      "Hamstrings",
+
+      "quads",
+
+      "glutes",
+
+      "hamstrings",
+
     ],
 
+
+
     "tips": [
-      "Keep your chest lifted.",
-      "Keep your heels on the floor.",
-      "Do not let your knees collapse inward.",
+
+      "squatsTip1",
+
+      "squatsTip2",
+
+      "squatsTip3",
+
     ],
+
   },
+
+
 
   "HIGH STEPPING": {
+
     "name": "HIGH STEPPING",
-    "gif": "assets/gif/high_stepping.gif",
+
+    "nameKey": "highStepping",
+
+    "gif": "assets/webp/legstepping.webp",
+
+
 
     // এখানে High Stepping ভিডিওর YouTube ID বসাবে
+
     "youtubeId": "kLh-uczlPLg",
 
+
+
     "value": "00:30",
+
     "difficulty": "Beginner",
+
     "calorie": "7 kcal",
 
+
+
+    "instructionKey": "highSteppingInstruction",
+
+    "benefitKey": "highSteppingBenefit",
+
+
+
     "instruction":
+
     "Stand straight and run in place while lifting each knee toward your chest. Move your arms naturally with each step.",
 
+
+
     "benefit":
+
     "High stepping improves endurance and warms up the whole body.",
 
+
+
     "focusAreas": [
-      "Legs",
-      "Core",
-      "Calves",
+
+      "legs",
+
+      "core",
+
+      "calves",
+
     ],
 
+
+
     "tips": [
-      "Keep your body upright.",
-      "Land softly on your feet.",
-      "Lift your knees as high as comfortable.",
+
+      "highSteppingTip1",
+
+      "highSteppingTip2",
+
+      "highSteppingTip3",
+
     ],
+
   },
+
+
 
   "PUSH-UPS": {
+
     "name": "PUSH-UPS",
-    "gif": "assets/gif/push_up.gif",
+
+    "nameKey": "pushUps",
+
+    "gif": "assets/webp/pushups.webp",
+
+
 
     // এখানে Push-ups ভিডিওর YouTube ID বসাবে
+
     "youtubeId": "kLh-uczlPLg",
+
+
 
     "value": "x10",
+
     "difficulty": "Beginner",
+
     "calorie": "7 kcal",
 
+
+
+    "instructionKey": "pushUpsInstruction",
+
+    "benefitKey": "pushUpsBenefit",
+
+
+
     "instruction":
+
     "Place your hands slightly wider than your shoulders. Keep your body straight, lower your chest toward the floor and push yourself back up.",
 
+
+
     "benefit":
+
     "Push-ups strengthen the chest, shoulders, arms and core.",
 
+
+
     "focusAreas": [
-      "Chest",
-      "Shoulders",
-      "Triceps",
+
+      "chest",
+
+      "shoulders",
+
+      "triceps",
+
     ],
 
+
+
     "tips": [
-      "Keep your body in a straight line.",
-      "Do not drop your hips.",
-      "Control your elbows while lowering.",
+
+      "pushUpsTip1",
+
+      "pushUpsTip2",
+
+      "pushUpsTip3",
+
     ],
+
   },
+
+
 
   "REVERSE CRUNCHES": {
+
     "name": "REVERSE CRUNCHES",
-    "gif": "assets/gif/reverse_crunch.gif",
+
+    "nameKey": "reverseCrunches",
+
+    "gif": "assets/webp/reversecrunches.webp",
+
+
 
     // এখানে Reverse Crunches ভিডিওর YouTube ID বসাবে
+
     "youtubeId": "kLh-uczlPLg",
 
+
+
     "value": "x16",
+
     "difficulty": "Beginner",
+
     "calorie": "6 kcal",
 
+
+
+    "instructionKey": "reverseCrunchesInstruction",
+
+    "benefitKey": "reverseCrunchesBenefit",
+
+
+
     "instruction":
+
     "Lie on your back with your knees bent. Pull your knees toward your chest and gently lift your hips from the floor. Slowly return to the starting position.",
 
+
+
     "benefit":
+
     "Reverse crunches strengthen the lower abdominal muscles.",
 
+
+
     "focusAreas": [
-      "Lower abs",
-      "Core",
-      "Hips",
+
+      "lowerAbs",
+
+      "core",
+
+      "hips",
+
     ],
 
+
+
     "tips": [
-      "Do not swing your legs.",
-      "Move slowly and with control.",
-      "Keep your lower back supported.",
+
+      "reverseCrunchesTip1",
+
+      "reverseCrunchesTip2",
+
+      "reverseCrunchesTip3",
+
     ],
+
   },
+
+
 
   "PLANK": {
+
     "name": "PLANK",
-    "gif": "assets/gif/plank.gif",
+
+    "nameKey": "plank",
+
+    "gif": "assets/webp/plank.webp",
+
+
 
     // এখানে Plank ভিডিওর YouTube ID বসাবে
+
     "youtubeId": "kLh-uczlPLg",
 
+
+
     "value": "00:30",
+
     "difficulty": "Beginner",
+
     "calorie": "5 kcal",
 
+
+
+    "instructionKey": "plankInstruction",
+
+    "benefitKey": "plankBenefit",
+
+
+
     "instruction":
+
     "Place your forearms on the floor and extend your legs behind you. Keep your body straight from your head to your heels.",
 
+
+
     "benefit":
+
     "Plank strengthens the core and improves body stability.",
 
+
+
     "focusAreas": [
-      "Abs",
-      "Back",
-      "Shoulders",
+
+      "abs",
+
+      "backMuscles",
+
+      "shoulders",
+
     ],
 
+
+
     "tips": [
-      "Keep your hips level.",
-      "Do not hold your breath.",
-      "Keep your neck relaxed.",
+
+      "plankTip1",
+
+      "plankTip2",
+
+      "plankTip3",
+
     ],
+
   },
+
+
 
   "LUNGES": {
+
     "name": "LUNGES",
-    "gif": "assets/gif/lunges.gif",
+
+    "nameKey": "lunges",
+
+    "gif": "assets/webp/lunges.webp",
+
+
 
     // এখানে Lunges ভিডিওর YouTube ID বসাবে
+
     "youtubeId": "kLh-uczlPLg",
+
+
 
     "value": "x16",
+
     "difficulty": "Beginner",
+
     "calorie": "8 kcal",
 
+
+
+    "instructionKey": "lungesInstruction",
+
+    "benefitKey": "lungesBenefit",
+
+
+
     "instruction":
+
     "Stand straight and step forward with one leg. Lower your body until both knees are bent. Push back and repeat with the other leg.",
 
+
+
     "benefit":
+
     "Lunges improve leg strength, balance and stability.",
 
+
+
     "focusAreas": [
-      "Quads",
-      "Glutes",
-      "Hamstrings",
+
+      "quads",
+
+      "glutes",
+
+      "hamstrings",
+
     ],
 
+
+
     "tips": [
-      "Keep your upper body straight.",
-      "Keep your front knee above your ankle.",
-      "Use a controlled movement.",
+
+      "lungesTip1",
+
+      "lungesTip2",
+
+      "lungesTip3",
+
     ],
+
   },
+
+
 
   "HIGH KNEES": {
+
     "name": "HIGH KNEES",
-    "gif": "assets/gif/high_knees.gif",
+
+    "nameKey": "highKnees",
+
+    "gif": "assets/webp/highknees.webp",
 
     // এখানে High Knees ভিডিওর YouTube ID বসাবে
+
     "youtubeId": "kLh-uczlPLg",
 
+
+
     "value": "00:30",
+
     "difficulty": "Beginner",
+
     "calorie": "8 kcal",
 
+
+
+    "instructionKey": "highKneesInstruction",
+
+    "benefitKey": "highKneesBenefit",
+
+
+
     "instruction":
+
     "Run in place while lifting your knees toward your chest. Move your arms quickly to maintain rhythm.",
 
+
+
     "benefit":
+
     "High knees improve cardiovascular fitness and leg strength.",
 
+
+
     "focusAreas": [
-      "Legs",
-      "Abs",
-      "Calves",
+
+      "legs",
+
+      "abs",
+
+      "calves",
+
     ],
 
+
+
     "tips": [
-      "Keep your chest upright.",
-      "Land softly.",
-      "Maintain a steady rhythm.",
+
+      "highKneesTip1",
+
+      "highKneesTip2",
+
+      "highKneesTip3",
+
     ],
+
   },
+
+
 
   "LEG RAISES": {
+
     "name": "LEG RAISES",
-    "gif": "assets/gif/leg_raises.gif",
+
+    "nameKey": "legRaises",
+
+    "gif": "assets/webp/jumping.webp",
+
+
 
     // এখানে Leg Raises ভিডিওর YouTube ID বসাবে
+
     "youtubeId": "kLh-uczlPLg",
+
+
 
     "value": "x14",
+
     "difficulty": "Beginner",
+
     "calorie": "6 kcal",
 
+
+
+    "instructionKey": "legRaisesInstruction",
+
+    "benefitKey": "legRaisesBenefit",
+
+
+
     "instruction":
+
     "Lie flat on your back with your legs straight. Raise both legs upward, then slowly lower them without touching the floor.",
 
+
+
     "benefit":
+
     "Leg raises strengthen the lower abs and hip flexors.",
 
+
+
     "focusAreas": [
-      "Lower abs",
-      "Hip flexors",
-      "Core",
+
+      "lowerAbs",
+
+      "hipFlexors",
+
+      "core",
+
     ],
 
+
+
     "tips": [
-      "Keep your lower back on the floor.",
-      "Do not swing your legs.",
-      "Lower your legs slowly.",
+
+      "legRaisesTip1",
+
+      "legRaisesTip2",
+
+      "legRaisesTip3",
+
     ],
+
   },
+
+
 
   "JUMPING JACKS": {
+
     "name": "JUMPING JACKS",
-    "gif": "assets/gif/jumping_jacks.gif",
+
+    "nameKey": "jumpingJacks",
+
+    "gif": "assets/webp/jumping.webp",
+
+
 
     // এখানে Jumping Jacks ভিডিওর YouTube ID বসাবে
+
     "youtubeId": "kLh-uczlPLg",
 
+
+
     "value": "00:30",
+
     "difficulty": "Beginner",
+
     "calorie": "9 kcal",
 
+
+
+    "instructionKey": "jumpingJacksInstruction",
+
+    "benefitKey": "jumpingJacksBenefit",
+
+
+
     "instruction":
+
     "Stand with your feet together and arms by your sides. Jump while spreading your legs and raising your arms overhead. Jump back to the starting position.",
 
+
+
     "benefit":
+
     "Jumping jacks improve cardiovascular fitness and warm up the body.",
 
+
+
     "focusAreas": [
-      "Full body",
-      "Legs",
-      "Shoulders",
+
+      "fullBody",
+
+      "legs",
+
+      "shoulders",
+
     ],
 
+
+
     "tips": [
-      "Land softly on your feet.",
-      "Keep a steady pace.",
-      "Breathe normally.",
+
+      "jumpingJacksTip1",
+
+      "jumpingJacksTip2",
+
+      "jumpingJacksTip3",
+
     ],
+
   },
+
 };

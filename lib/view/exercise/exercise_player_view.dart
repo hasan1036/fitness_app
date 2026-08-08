@@ -7,6 +7,7 @@ import '../../service/workout_progress_service.dart';
 import '../../service/workout_stats_service.dart';
 
 import '../../common/color_extention.dart';
+import '../../l10n/app_localizations.dart';
 
 class ExercisePlayerView extends StatefulWidget {
   final List<Map<String, dynamic>> exercises;
@@ -53,8 +54,47 @@ class _ExercisePlayerViewState extends State<ExercisePlayerView> {
   Map<String, dynamic> get currentExercise =>
       widget.exercises[currentIndex];
 
-  String get exerciseName =>
-      currentExercise["name"]?.toString() ?? "EXERCISE";
+  String get exerciseName {
+    final String nameKey =
+        currentExercise["nameKey"]?.toString().trim() ?? "";
+
+    if (nameKey.isNotEmpty) {
+      return context.tr(nameKey);
+    }
+
+    return currentExercise["name"]?.toString() ??
+        context.tr("exercise");
+  }
+
+  String _localizedExerciseName(
+      Map<String, dynamic> exercise,
+      ) {
+    final String nameKey =
+        exercise["nameKey"]?.toString().trim() ?? "";
+
+    if (nameKey.isNotEmpty) {
+      return context.tr(nameKey);
+    }
+
+    return exercise["name"]?.toString() ?? "";
+  }
+
+  String _ttsLanguageCode(Locale locale) {
+    switch (locale.languageCode) {
+      case "bn":
+        return "bn-BD";
+      case "hi":
+        return "hi-IN";
+      case "ar":
+        return "ar-SA";
+      case "ja":
+        return "ja-JP";
+      case "es":
+        return "es-ES";
+      default:
+        return "en-US";
+    }
+  }
 
   String get exerciseGif =>
       currentExercise["gif"]?.toString() ?? "";
@@ -71,10 +111,16 @@ class _ExercisePlayerViewState extends State<ExercisePlayerView> {
 
     currentIndex = widget.startIndex;
 
-    _setupVoice();
-    _prepareCurrentExercise();
-    _startReadyCountdown();
-    _saveWorkoutStarted();
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (!mounted) return;
+
+      await _setupVoice();
+      _prepareCurrentExercise();
+      await _saveWorkoutStarted();
+
+      if (!mounted) return;
+      _startReadyCountdown();
+    });
   }
   Future<void> _saveWorkoutStarted() async {
     await WorkoutProgressService.startWorkout(
@@ -85,7 +131,11 @@ class _ExercisePlayerViewState extends State<ExercisePlayerView> {
   }
 
   Future<void> _setupVoice() async {
-    await _flutterTts.setLanguage("en-US");
+    final Locale locale = Localizations.localeOf(context);
+
+    await _flutterTts.setLanguage(
+      _ttsLanguageCode(locale),
+    );
     await _flutterTts.setSpeechRate(0.45);
     await _flutterTts.setPitch(1.0);
     await _flutterTts.setVolume(1.0);
@@ -139,7 +189,7 @@ class _ExercisePlayerViewState extends State<ExercisePlayerView> {
       isPaused = false;
     });
 
-    _speak("Ready for $exerciseName");
+    _speak("${context.tr('readyFor')} $exerciseName");
 
     _timer = Timer.periodic(
       const Duration(seconds: 1),
@@ -162,7 +212,7 @@ class _ExercisePlayerViewState extends State<ExercisePlayerView> {
             isReadyScreen = false;
           });
 
-          _speak("Start");
+          _speak(context.tr("start"));
 
           if (!isRepsExercise) {
             _startExerciseTimer();
@@ -214,7 +264,7 @@ class _ExercisePlayerViewState extends State<ExercisePlayerView> {
             isRunning = false;
           });
 
-          _speak("Exercise complete");
+          _speak(context.tr("exerciseComplete"));
 
           _startRestScreen();
         }
@@ -242,7 +292,7 @@ class _ExercisePlayerViewState extends State<ExercisePlayerView> {
       restSeconds = 15;
     });
 
-    _speak("Rest for 15 seconds");
+    _speak(context.tr("restFor15Seconds"));
 
     _timer = Timer.periodic(
       const Duration(seconds: 1),
@@ -341,7 +391,7 @@ class _ExercisePlayerViewState extends State<ExercisePlayerView> {
   void _completeRepsExercise() {
     if (!isRepsExercise) return;
 
-    _speak("Exercise complete");
+    _speak(context.tr("exerciseComplete"));
     _startRestScreen();
   }
 
@@ -355,9 +405,9 @@ class _ExercisePlayerViewState extends State<ExercisePlayerView> {
     });
 
     if (isPaused) {
-      _speak("Paused");
+      _speak(context.tr("paused"));
     } else {
-      _speak("Resume");
+      _speak(context.tr("resume"));
     }
   }
 
@@ -373,7 +423,7 @@ class _ExercisePlayerViewState extends State<ExercisePlayerView> {
     if (!soundEnabled) {
       _flutterTts.stop();
     } else {
-      _speak("Voice guide enabled");
+      _speak(context.tr("voiceGuideEnabled"));
     }
   }
 
@@ -423,7 +473,7 @@ class _ExercisePlayerViewState extends State<ExercisePlayerView> {
     });
 
     await _speak(
-      "Congratulations. Workout complete.",
+      context.tr("congratulationsWorkoutComplete"),
     );
   }
 
@@ -494,7 +544,7 @@ class _ExercisePlayerViewState extends State<ExercisePlayerView> {
         const Spacer(),
 
         Text(
-          "DAY ${widget.dayNumber}",
+          "${context.tr('day')} ${widget.dayNumber}",
           style: const TextStyle(
             fontSize: 17,
             fontWeight: FontWeight.w800,
@@ -596,7 +646,7 @@ class _ExercisePlayerViewState extends State<ExercisePlayerView> {
               const SizedBox(height: 30),
 
               Text(
-                "READY TO GO!",
+                context.tr("readyToGo"),
                 style: TextStyle(
                   color: TColor.primary,
                   fontSize: 32,
@@ -609,6 +659,8 @@ class _ExercisePlayerViewState extends State<ExercisePlayerView> {
               Text(
                 exerciseName,
                 textAlign: TextAlign.center,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
                 style: TextStyle(
                   color: TColor.sceondarText,
                   fontSize: 21,
@@ -621,7 +673,7 @@ class _ExercisePlayerViewState extends State<ExercisePlayerView> {
               Text(
                 readySeconds > 0
                     ? readySeconds.toString()
-                    : "GO!",
+                    : context.tr("go"),
                 style: const TextStyle(
                   color: Colors.black,
                   fontSize: 62,
@@ -644,9 +696,9 @@ class _ExercisePlayerViewState extends State<ExercisePlayerView> {
                       borderRadius: BorderRadius.circular(25),
                     ),
                   ),
-                  child: const Text(
-                    "SKIP",
-                    style: TextStyle(
+                  child: Text(
+                    context.tr("skip"),
+                    style: const TextStyle(
                       fontSize: 19,
                       fontWeight: FontWeight.w800,
                     ),
@@ -741,6 +793,8 @@ class _ExercisePlayerViewState extends State<ExercisePlayerView> {
               Text(
                 exerciseName,
                 textAlign: TextAlign.center,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
 
                 style: const TextStyle(
                   fontSize: 25,
@@ -781,10 +835,10 @@ class _ExercisePlayerViewState extends State<ExercisePlayerView> {
                       ),
                     ),
 
-                    child: const Text(
-                      "COMPLETE",
+                    child: Text(
+                      context.tr("complete").toUpperCase(),
 
-                      style: TextStyle(
+                      style: const TextStyle(
                         fontSize: 19,
                         fontWeight: FontWeight.w800,
                       ),
@@ -826,12 +880,18 @@ class _ExercisePlayerViewState extends State<ExercisePlayerView> {
                                 : Icons.pause_rounded,
                           ),
 
-                          label: Text(
-                            isPaused ? "RESUME" : "PAUSE",
+                          label: Flexible(
+                            child: Text(
+                              isPaused
+                                  ? context.tr("resume")
+                                  : context.tr("pause"),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
 
-                            style: const TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.w800,
+                              style: const TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w800,
+                              ),
                             ),
                           ),
                         ),
@@ -920,7 +980,7 @@ class _ExercisePlayerViewState extends State<ExercisePlayerView> {
               const SizedBox(height: 20),
 
               Text(
-                "TAKE A REST",
+                context.tr("takeARest"),
                 style: TextStyle(
                   color: TColor.primary,
                   fontSize: 34,
@@ -942,7 +1002,7 @@ class _ExercisePlayerViewState extends State<ExercisePlayerView> {
 
               if (nextExercise != null) ...[
                 Text(
-                  "NEXT",
+                  context.tr("next").toUpperCase(),
                   style: TextStyle(
                     color: TColor.sceondarText,
                     fontSize: 14,
@@ -953,8 +1013,10 @@ class _ExercisePlayerViewState extends State<ExercisePlayerView> {
                 const SizedBox(height: 7),
 
                 Text(
-                  nextExercise["name"]?.toString() ?? "",
+                  _localizedExerciseName(nextExercise),
                   textAlign: TextAlign.center,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
 
                   style: const TextStyle(
                     fontSize: 22,
@@ -981,10 +1043,10 @@ class _ExercisePlayerViewState extends State<ExercisePlayerView> {
                     ),
                   ),
 
-                  child: const Text(
-                    "SKIP REST",
+                  child: Text(
+                    context.tr("skipRest"),
 
-                    style: TextStyle(
+                    style: const TextStyle(
                       fontSize: 19,
                       fontWeight: FontWeight.w800,
                     ),
@@ -1032,12 +1094,12 @@ class _ExercisePlayerViewState extends State<ExercisePlayerView> {
 
               const SizedBox(height: 30),
 
-              const Text(
-                "CONGRATULATIONS!",
+              Text(
+                context.tr("congratulations"),
 
                 textAlign: TextAlign.center,
 
-                style: TextStyle(
+                style: const TextStyle(
                   fontSize: 30,
                   fontWeight: FontWeight.w900,
                 ),
@@ -1046,7 +1108,7 @@ class _ExercisePlayerViewState extends State<ExercisePlayerView> {
               const SizedBox(height: 15),
 
               Text(
-                "Day ${widget.dayNumber} workout completed.",
+                "${context.tr('day')} ${widget.dayNumber} ${context.tr('dayWorkoutCompleted')}",
 
                 textAlign: TextAlign.center,
 
@@ -1080,10 +1142,10 @@ class _ExercisePlayerViewState extends State<ExercisePlayerView> {
                     ),
                   ),
 
-                  child: const Text(
-                    "DONE",
+                  child: Text(
+                    context.tr("done").toUpperCase(),
 
-                    style: TextStyle(
+                    style: const TextStyle(
                       fontSize: 19,
                       fontWeight: FontWeight.w800,
                     ),

@@ -9,6 +9,11 @@ class UserProfileData {
   final String gender;
   final String goalType;
   final bool profileCompleted;
+  final String activityLevel;
+  final String fitnessLevel;
+  final bool workoutReminderEnabled;
+  final int workoutReminderHour;
+  final int workoutReminderMinute;
 
   const UserProfileData({
     required this.startWeight,
@@ -19,6 +24,11 @@ class UserProfileData {
     required this.gender,
     required this.goalType,
     required this.profileCompleted,
+    this.activityLevel = 'normal',
+    this.fitnessLevel = 'beginner',
+    this.workoutReminderEnabled = false,
+    this.workoutReminderHour = 20,
+    this.workoutReminderMinute = 0,
   });
 
   double get heightMeter {
@@ -167,6 +177,15 @@ class UserProfileService {
   static const String _profileCompletedKey =
       "profile_completed";
 
+  static const String _fitnessLevelKey =
+      "fitness_level";
+
+  static const String _activityLevelKey =
+      "activity_level";
+
+  static const String _initialSetupCompletedKey =
+      "initial_setup_completed";
+
   static Future<UserProfileData>
   getProfile() async {
     final SharedPreferences prefs =
@@ -190,6 +209,22 @@ class UserProfileService {
       profileCompleted:
       prefs.getBool(_profileCompletedKey) ??
           false,
+      activityLevel:
+      prefs.getString(_activityLevelKey) ?? 'normal',
+      fitnessLevel:
+      prefs.getString(_fitnessLevelKey) ?? 'beginner',
+      workoutReminderEnabled:
+      prefs.getBool('workout_reminder_enabled') ??
+          prefs.getBool('initial_workout_reminder_enabled') ??
+          false,
+      workoutReminderHour:
+      prefs.getInt('workout_reminder_hour') ??
+          prefs.getInt('initial_workout_reminder_hour') ??
+          20,
+      workoutReminderMinute:
+      prefs.getInt('workout_reminder_minute') ??
+          prefs.getInt('initial_workout_reminder_minute') ??
+          0,
     );
   }
 
@@ -328,6 +363,78 @@ class UserProfileService {
     );
   }
 
+
+
+  static Future<void> saveActivityLevel(
+      String activityLevel,
+      ) async {
+    final SharedPreferences prefs =
+    await SharedPreferences.getInstance();
+
+    await prefs.setString(
+      _activityLevelKey,
+      activityLevel,
+    );
+  }
+
+  static Future<String> getActivityLevel() async {
+    final SharedPreferences prefs =
+    await SharedPreferences.getInstance();
+
+    return prefs.getString(_activityLevelKey) ??
+        "normal";
+  }
+
+  static Future<void> saveFitnessLevelSelection(
+      String fitnessLevel,
+      ) async {
+    final SharedPreferences prefs =
+    await SharedPreferences.getInstance();
+
+    await prefs.setString(
+      _fitnessLevelKey,
+      fitnessLevel,
+    );
+  }
+
+  static Future<void> completeInitialSetup(
+      String fitnessLevel,
+      ) async {
+    final SharedPreferences prefs =
+    await SharedPreferences.getInstance();
+
+    await prefs.setString(
+      _fitnessLevelKey,
+      fitnessLevel,
+    );
+
+    await prefs.setBool(
+      _initialSetupCompletedKey,
+      true,
+    );
+
+    await prefs.setBool(
+      _profileCompletedKey,
+      true,
+    );
+  }
+
+  static Future<String> getFitnessLevel() async {
+    final SharedPreferences prefs =
+    await SharedPreferences.getInstance();
+
+    return prefs.getString(_fitnessLevelKey) ??
+        "beginner";
+  }
+
+  static Future<bool> isInitialSetupCompleted() async {
+    final SharedPreferences prefs =
+    await SharedPreferences.getInstance();
+
+    return prefs.getBool(_initialSetupCompletedKey) ??
+        false;
+  }
+
   static Future<bool>
   isProfileCompleted() async {
     final SharedPreferences prefs =
@@ -351,5 +458,14 @@ class UserProfileService {
     await prefs.remove(_genderKey);
     await prefs.remove(_goalTypeKey);
     await prefs.remove(_profileCompletedKey);
+    await prefs.remove(_fitnessLevelKey);
+    await prefs.remove(_activityLevelKey);
+    await prefs.remove(_initialSetupCompletedKey);
+    await prefs.remove('initial_workout_reminder_enabled');
+    await prefs.remove('initial_workout_reminder_hour');
+    await prefs.remove('initial_workout_reminder_minute');
+    await prefs.remove('workout_reminder_enabled');
+    await prefs.remove('workout_reminder_hour');
+    await prefs.remove('workout_reminder_minute');
   }
 }

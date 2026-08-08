@@ -3,6 +3,7 @@ import 'package:flutter_tts/flutter_tts.dart';
 import 'package:youtube_player_iframe/youtube_player_iframe.dart';
 
 import '../../common/color_extention.dart';
+import '../../l10n/app_localizations.dart';
 
 class ExerciseDetailView extends StatefulWidget {
   final List<Map<String, dynamic>> exercises;
@@ -38,6 +39,44 @@ class _ExerciseDetailViewState extends State<ExerciseDetailView> {
   Map<String, dynamic> get currentExercise =>
       widget.exercises[currentIndex];
 
+  String _exerciseText(String field) {
+    final String key =
+        currentExercise['${field}Key']?.toString().trim() ?? '';
+
+    if (key.isNotEmpty) {
+      return context.tr(key);
+    }
+
+    return currentExercise[field]?.toString() ?? '';
+  }
+
+  List<String> _localizedList(String field) {
+    final List<dynamic> raw =
+    List<dynamic>.from(currentExercise[field] ?? const []);
+
+    return raw.map((item) {
+      final String value = item.toString();
+      return context.tr(value);
+    }).toList();
+  }
+
+  String _ttsLanguageCode() {
+    switch (Localizations.localeOf(context).languageCode) {
+      case 'bn':
+        return 'bn-BD';
+      case 'hi':
+        return 'hi-IN';
+      case 'ar':
+        return 'ar-SA';
+      case 'ja':
+        return 'ja-JP';
+      case 'es':
+        return 'es-ES';
+      default:
+        return 'en-US';
+    }
+  }
+
   @override
   void initState() {
     super.initState();
@@ -56,7 +95,7 @@ class _ExerciseDetailViewState extends State<ExerciseDetailView> {
   /// =====================================================
 
   Future<void> _setupVoice() async {
-    await _flutterTts.setLanguage("en-US");
+    await _flutterTts.setLanguage(_ttsLanguageCode());
     await _flutterTts.setSpeechRate(0.43);
     await _flutterTts.setPitch(1.0);
     await _flutterTts.setVolume(1.0);
@@ -100,14 +139,9 @@ class _ExerciseDetailViewState extends State<ExerciseDetailView> {
       return;
     }
 
-    final String name =
-        currentExercise["name"]?.toString() ?? "";
-
-    final String instruction =
-        currentExercise["instruction"]?.toString() ?? "";
-
-    final String benefit =
-        currentExercise["benefit"]?.toString() ?? "";
+    final String name = _exerciseText('name');
+    final String instruction = _exerciseText('instruction');
+    final String benefit = _exerciseText('benefit');
 
     final String voiceText =
         "$name. $instruction $benefit";
@@ -237,9 +271,9 @@ class _ExerciseDetailViewState extends State<ExerciseDetailView> {
     });
 
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text("Exercise setting saved"),
-        duration: Duration(seconds: 1),
+      SnackBar(
+        content: Text(context.tr('exerciseSettingSaved')),
+        duration: const Duration(seconds: 1),
       ),
     );
   }
@@ -309,14 +343,10 @@ class _ExerciseDetailViewState extends State<ExerciseDetailView> {
   @override
   Widget build(BuildContext context) {
     final List<String> focusAreas =
-    List<String>.from(
-      currentExercise["focusAreas"] ?? [],
-    );
+    _localizedList('focusAreas');
 
     final List<String> tips =
-    List<String>.from(
-      currentExercise["tips"] ?? [],
-    );
+    _localizedList('tips');
 
     return Scaffold(
       backgroundColor:
@@ -346,9 +376,9 @@ class _ExerciseDetailViewState extends State<ExerciseDetailView> {
         ),
 
         title: Text(
-          currentExercise["name"]
-              ?.toString() ??
-              "",
+          _exerciseText('name'),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
 
           style: const TextStyle(
             color: Colors.black,
@@ -439,7 +469,7 @@ class _ExerciseDetailViewState extends State<ExerciseDetailView> {
 
           Expanded(
             child: _tabButton(
-              title: "Muscle",
+              title: context.tr('muscle'),
               index: 1,
             ),
           ),
@@ -448,7 +478,7 @@ class _ExerciseDetailViewState extends State<ExerciseDetailView> {
 
           Expanded(
             child: _tabButton(
-              title: "How To",
+              title: context.tr('howTo'),
               index: 2,
             ),
           ),
@@ -570,61 +600,46 @@ class _ExerciseDetailViewState extends State<ExerciseDetailView> {
               /// VOICE GUIDE BUTTON
 
               Positioned(
-                left: 14,
                 top: 14,
-
-                child: InkWell(
-                  borderRadius:
-                  BorderRadius.circular(22),
-
+                left: 14,
+                child: GestureDetector(
                   onTap: _toggleVoice,
-
                   child: Container(
-                    padding:
-                    const EdgeInsets.symmetric(
+                    padding: const EdgeInsets.symmetric(
                       horizontal: 14,
                       vertical: 10,
                     ),
-
                     decoration: BoxDecoration(
                       color: isSpeaking
                           ? TColor.primary
-                          : TColor.primaryLight,
-
-                      borderRadius:
-                      BorderRadius.circular(22),
+                          : Colors.white,
+                      borderRadius: BorderRadius.circular(22),
+                      boxShadow: const [
+                        BoxShadow(
+                          color: Color(0x22000000),
+                          blurRadius: 8,
+                          offset: Offset(0, 3),
+                        ),
+                      ],
                     ),
-
                     child: Row(
+                      mainAxisSize: MainAxisSize.min,
                       children: [
                         Icon(
                           isSpeaking
-                              ? Icons
-                              .stop_circle_outlined
-                              : Icons
-                              .volume_up_rounded,
-
-                          color: isSpeaking
-                              ? Colors.white
-                              : TColor.primary,
-
-                          size: 20,
+                              ? Icons.stop_circle
+                              : Icons.volume_up_rounded,
+                          color: TColor.primary,
+                          size: 22,
                         ),
-
-                        const SizedBox(width: 7),
-
+                        const SizedBox(width: 8),
                         Text(
                           isSpeaking
-                              ? "Stop Voice"
-                              : "Voice Guide",
-
+                              ? context.tr('stopVoice')
+                              : context.tr('voiceGuide'),
                           style: TextStyle(
-                            color: isSpeaking
-                                ? Colors.white
-                                : TColor.primary,
-
-                            fontWeight:
-                            FontWeight.w700,
+                            color: TColor.primary,
+                            fontWeight: FontWeight.bold,
                           ),
                         ),
                       ],
@@ -642,14 +657,12 @@ class _ExerciseDetailViewState extends State<ExerciseDetailView> {
 
         const SizedBox(height: 25),
 
-        _sectionTitle("INSTRUCTION"),
+        _sectionTitle(context.tr('instruction')),
 
         const SizedBox(height: 10),
 
         Text(
-          currentExercise["instruction"]
-              ?.toString() ??
-              "",
+          _exerciseText('instruction'),
 
           style: const TextStyle(
             fontSize: 16,
@@ -661,9 +674,7 @@ class _ExerciseDetailViewState extends State<ExerciseDetailView> {
         const SizedBox(height: 15),
 
         Text(
-          currentExercise["benefit"]
-              ?.toString() ??
-              "",
+          _exerciseText('benefit'),
 
           style: TextStyle(
             fontSize: 15,
@@ -674,7 +685,7 @@ class _ExerciseDetailViewState extends State<ExerciseDetailView> {
 
         const SizedBox(height: 25),
 
-        _sectionTitle("FOCUS AREA"),
+        _sectionTitle(context.tr('focusArea')),
 
         const SizedBox(height: 12),
 
@@ -740,10 +751,12 @@ class _ExerciseDetailViewState extends State<ExerciseDetailView> {
 
               const SizedBox(width: 12),
 
-              const Expanded(
+              Expanded(
                 child: Text(
-                  "Duration / Reps",
-                  style: TextStyle(
+                  context.tr('durationReps'),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w700,
                   ),
@@ -798,7 +811,9 @@ class _ExerciseDetailViewState extends State<ExerciseDetailView> {
             ),
 
             child: Text(
-              isSaved ? "SAVED ✓" : "SAVE",
+              isSaved
+                  ? context.tr('savedWithCheck')
+                  : context.tr('save'),
 
               style: const TextStyle(
                 fontSize: 16,
@@ -867,7 +882,7 @@ class _ExerciseDetailViewState extends State<ExerciseDetailView> {
           child: Column(
             children: [
               Text(
-                "Target Muscles",
+                context.tr('targetMuscles'),
 
                 style: TextStyle(
                   color: TColor.primary,
@@ -907,7 +922,7 @@ class _ExerciseDetailViewState extends State<ExerciseDetailView> {
 
         const SizedBox(height: 25),
 
-        _sectionTitle("FOCUS AREA"),
+        _sectionTitle(context.tr('focusArea')),
 
         const SizedBox(height: 12),
 
@@ -944,9 +959,7 @@ class _ExerciseDetailViewState extends State<ExerciseDetailView> {
 
         const SizedBox(height: 28),
 
-        _sectionTitle(
-          "COMMON MISTAKES & TIPS",
-        ),
+        _sectionTitle(context.tr('commonMistakesTips')),
 
         const SizedBox(height: 12),
 
@@ -1066,13 +1079,13 @@ class _ExerciseDetailViewState extends State<ExerciseDetailView> {
 
                 const SizedBox(height: 15),
 
-                const Text(
-                  "How-to video is not available",
+                Text(
+                  context.tr('howToVideoUnavailable'),
 
                   textAlign:
                   TextAlign.center,
 
-                  style: TextStyle(
+                  style: const TextStyle(
                     fontSize: 17,
                     fontWeight:
                     FontWeight.w700,
@@ -1082,7 +1095,7 @@ class _ExerciseDetailViewState extends State<ExerciseDetailView> {
                 const SizedBox(height: 8),
 
                 Text(
-                  "এই exercise-এর সঠিক YouTube video ID add করো।",
+                  context.tr('addCorrectYoutubeVideoId'),
 
                   textAlign:
                   TextAlign.center,
@@ -1101,14 +1114,12 @@ class _ExerciseDetailViewState extends State<ExerciseDetailView> {
 
         const SizedBox(height: 25),
 
-        _sectionTitle("HOW TO DO"),
+        _sectionTitle(context.tr('howToDo')),
 
         const SizedBox(height: 12),
 
         Text(
-          currentExercise["instruction"]
-              ?.toString() ??
-              "",
+          _exerciseText('instruction'),
 
           style: const TextStyle(
             fontSize: 16,
@@ -1199,18 +1210,22 @@ class _ExerciseDetailViewState extends State<ExerciseDetailView> {
 
                 const SizedBox(width: 12),
 
-                Text(
-                  isSpeaking
-                      ? "Stop Voice Guide"
-                      : "Listen to Voice Guide",
+                Expanded(
+                  child: Text(
+                    isSpeaking
+                        ? context.tr('stopVoiceGuide')
+                        : context.tr('listenVoiceGuide'),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
 
-                  style: TextStyle(
-                    color: isSpeaking
-                        ? Colors.white
-                        : TColor.primary,
+                    style: TextStyle(
+                      color: isSpeaking
+                          ? Colors.white
+                          : TColor.primary,
 
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                 ),
               ],
@@ -1293,10 +1308,13 @@ class _ExerciseDetailViewState extends State<ExerciseDetailView> {
                 onPressed: () async {
                   await _stopVoice();
 
-                  await _youtubeController?.pauseVideo();
-                  if (!context.mounted) return;
+                  try {
+                    _youtubeController?.pauseVideo();
+                  } catch (_) {}
 
-                  Navigator.pop(context);
+                  if (!mounted) return;
+
+                  Navigator.of(context).pop();
                 },
 
                 style: ElevatedButton.styleFrom(
@@ -1314,10 +1332,10 @@ class _ExerciseDetailViewState extends State<ExerciseDetailView> {
                   ),
                 ),
 
-                child: const Text(
-                  "CLOSE",
+                child: Text(
+                  context.tr('close'),
 
-                  style: TextStyle(
+                  style: const TextStyle(
                     fontSize: 17,
                     fontWeight: FontWeight.w800,
                   ),

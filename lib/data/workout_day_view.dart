@@ -7,6 +7,7 @@ import '../view/exercise/edit_plan_view.dart';
 import '../view/exercise/exercise_detail_view.dart';
 import '../view/exercise/exercise_player_view.dart';
 import '../service/workout_progress_service.dart';
+import '../l10n/app_localizations.dart';
 
 class WorkoutDayView extends StatefulWidget {
   final int dayNumber;
@@ -22,7 +23,80 @@ class WorkoutDayView extends StatefulWidget {
 
 class _WorkoutDayViewState extends State<WorkoutDayView> {
   bool warmUp = false;
+  String getHeaderImage() {
+    final int index = (widget.dayNumber - 1) % 3;
 
+    switch (index) {
+      case 0:
+        return "assets/img/pic1.png";
+      case 1:
+        return "assets/img/pic2.png";
+      default:
+        return "assets/img/pic3.png";
+    }
+  }
+
+
+  String _exerciseNameKey(String exerciseName) {
+    switch (exerciseName.trim().toUpperCase()) {
+      case 'MOUNTAIN CLIMBER':
+        return 'mountainClimber';
+      case 'SQUATS':
+        return 'squats';
+      case 'HIGH STEPPING':
+        return 'highStepping';
+      case 'PUSH-UPS':
+        return 'pushUps';
+      case 'REVERSE CRUNCHES':
+        return 'reverseCrunches';
+      case 'PLANK':
+        return 'plank';
+      case 'LUNGES':
+        return 'lunges';
+      case 'HIGH KNEES':
+        return 'highKnees';
+      case 'LEG RAISES':
+        return 'legRaises';
+      case 'JUMPING JACKS':
+        return 'jumpingJacks';
+      default:
+        return exerciseName;
+    }
+  }
+
+  String _localizedLevel(dynamic rawLevel) {
+    final String level = rawLevel?.toString().trim().toLowerCase() ?? '';
+
+    switch (level) {
+      case 'beginner':
+        return context.tr('beginner');
+      case 'intermediate':
+        return context.tr('intermediate');
+      case 'advanced':
+        return context.tr('advanced');
+      default:
+        return rawLevel?.toString() ?? '';
+    }
+  }
+
+  String _localizedCalorie(dynamic rawCalorie) {
+    final String value = rawCalorie?.toString() ?? '';
+    final RegExpMatch? match =
+    RegExp(r'[\d]+(?:[.,]\d+)?').firstMatch(value);
+
+    if (match == null) return value;
+
+    return '${match.group(0)} ${context.tr('kcal')}';
+  }
+
+  String _localizedTime(dynamic rawTime) {
+    final String value = rawTime?.toString() ?? '';
+    final RegExpMatch? match = RegExp(r'\d+').firstMatch(value);
+
+    if (match == null) return value;
+
+    return '${match.group(0)} ${context.tr('minuteShort')}';
+  }
   late List<Map<String, dynamic>> exercises;
   WorkoutProgress _progress = const WorkoutProgress(
     started: false,
@@ -47,6 +121,8 @@ class _WorkoutDayViewState extends State<WorkoutDayView> {
         .toList();
 
     _loadProgress();
+
+
   }
   Future<void> _loadProgress() async {
     final WorkoutProgress progress =
@@ -112,10 +188,10 @@ class _WorkoutDayViewState extends State<WorkoutDayView> {
                             right: 0,
                             bottom: 0,
                             child: Image.asset(
-                              "assets/img/2.png",
+                              getHeaderImage(),
                               width: 190,
-                              height: 260,
-                              fit: BoxFit.cover,
+                              height: 270,
+                              fit: BoxFit.contain,
                             ),
                           ),
                           Positioned(
@@ -125,7 +201,7 @@ class _WorkoutDayViewState extends State<WorkoutDayView> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  "DAY ${data["day"]}",
+                                  "${context.tr('day')} ${data["day"]}",
                                   style: const TextStyle(
                                     fontSize: 42,
                                     fontWeight: FontWeight.w900,
@@ -133,9 +209,9 @@ class _WorkoutDayViewState extends State<WorkoutDayView> {
                                   ),
                                 ),
                                 const SizedBox(height: 15),
-                                const Text(
-                                  "LOSE WEIGHT IN 30 DAYS",
-                                  style: TextStyle(
+                                Text(
+                                  context.tr('loseWeightIn30Days'),
+                                  style: const TextStyle(
                                     fontSize: 18,
                                     fontWeight: FontWeight.w800,
                                     color: Colors.black,
@@ -161,7 +237,7 @@ class _WorkoutDayViewState extends State<WorkoutDayView> {
                                       ),
                                       const SizedBox(width: 6),
                                       Text(
-                                        "FAQ",
+                                        context.tr('faq'),
                                         style: TextStyle(
                                           color: TColor.primary,
                                           fontWeight: FontWeight.w700,
@@ -196,7 +272,7 @@ class _WorkoutDayViewState extends State<WorkoutDayView> {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    "Basic",
+                                    context.tr('basic'),
                                     style: TextStyle(
                                       color: TColor.primary,
                                       fontSize: 20,
@@ -206,17 +282,17 @@ class _WorkoutDayViewState extends State<WorkoutDayView> {
                                   const SizedBox(height: 22),
                                   _buildInfoRow(
                                     icon: Icons.local_fire_department,
-                                    text: data["calorie"].toString(),
+                                    text: _localizedCalorie(data["calorie"]),
                                   ),
                                   const SizedBox(height: 20),
                                   _buildInfoRow(
                                     icon: Icons.access_time_filled,
-                                    text: data["time"].toString(),
+                                    text: _localizedTime(data["time"]),
                                   ),
                                   const SizedBox(height: 20),
                                   _buildInfoRow(
                                     icon: Icons.layers_rounded,
-                                    text: data["level"].toString(),
+                                    text: _localizedLevel(data["level"]),
                                   ),
                                   const SizedBox(height: 25),
                                   InkWell(
@@ -225,7 +301,7 @@ class _WorkoutDayViewState extends State<WorkoutDayView> {
                                       children: [
                                         Expanded(
                                           child: Text(
-                                            "Workout settings",
+                                            context.tr('workoutSettings'),
                                             style: TextStyle(
                                               color: TColor.primary,
                                               fontSize: 16,
@@ -249,7 +325,7 @@ class _WorkoutDayViewState extends State<WorkoutDayView> {
                               child: Column(
                                 children: [
                                   Text(
-                                    "Focus Areas",
+                                    context.tr('focusAreas'),
                                     style: TextStyle(
                                       color: TColor.primary,
                                       fontSize: 20,
@@ -283,9 +359,9 @@ class _WorkoutDayViewState extends State<WorkoutDayView> {
                       padding: const EdgeInsets.symmetric(horizontal: 20),
                       child: Row(
                         children: [
-                          const Text(
-                            "Warm-up",
-                            style: TextStyle(
+                          Text(
+                            context.tr('warmUp'),
+                            style: const TextStyle(
                               fontSize: 25,
                               fontWeight: FontWeight.w800,
                             ),
@@ -312,7 +388,7 @@ class _WorkoutDayViewState extends State<WorkoutDayView> {
                       child: Row(
                         children: [
                           Text(
-                            "Exercises (${exercises.length})",
+                            "${context.tr('exercises')} (${exercises.length})",
                             style: const TextStyle(
                               fontSize: 25,
                               fontWeight: FontWeight.w800,
@@ -345,7 +421,7 @@ class _WorkoutDayViewState extends State<WorkoutDayView> {
                               }
                             },
                             child: Text(
-                              "Edit >",
+                              "${context.tr('edit')} >",
                               style: TextStyle(
                                 color: TColor.primary,
                                 fontSize: 17,
@@ -446,8 +522,12 @@ class _WorkoutDayViewState extends State<WorkoutDayView> {
                   ),
                   child: Text(
                     _loadingProgress
-                        ? "LOADING..."
-                        : _progress.buttonText,
+                        ? context.tr('loadingUpper')
+                        : (_progress.completed
+                        ? context.tr('repeat')
+                        : _progress.started
+                        ? context.tr('continueUpper')
+                        : context.tr('startUpper')),
                     style: const TextStyle(
                       fontSize: 21,
                       fontWeight: FontWeight.w800,
@@ -523,7 +603,7 @@ class _WorkoutDayViewState extends State<WorkoutDayView> {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text(
-                  "$exerciseName exercise-এর details পাওয়া যায়নি",
+                  "$exerciseName ${context.tr('exerciseDetailsNotFound')}",
                 ),
               ),
             );
@@ -557,9 +637,9 @@ class _WorkoutDayViewState extends State<WorkoutDayView> {
 
           if (fullExerciseDetails.isEmpty) {
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
+               SnackBar(
                 content: Text(
-                  "Exercise details পাওয়া যায়নি",
+                  context.tr('exerciseDetailsNotFoundGeneral'),
                 ),
               ),
             );
@@ -708,7 +788,11 @@ class _WorkoutDayViewState extends State<WorkoutDayView> {
 
                   children: [
                     Text(
-                      exercise["name"].toString(),
+                      context.tr(
+                        _exerciseNameKey(
+                          exercise["name"].toString(),
+                        ),
+                      ),
 
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
@@ -727,9 +811,9 @@ class _WorkoutDayViewState extends State<WorkoutDayView> {
 
                     Text(
                       isCompleted
-                          ? "Completed"
+                          ? context.tr('completed')
                           : isCurrent
-                          ? "Current Exercise"
+                          ? context.tr('currentExercise')
                           : exercise["value"].toString(),
 
                       style: TextStyle(

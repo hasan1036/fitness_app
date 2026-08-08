@@ -17,11 +17,11 @@ class Step3View extends StatefulWidget {
 
 class _Step3ViewState extends State<Step3View> {
 
-   bool isAppleHealth = true;
-   DateTime? selectDate;
-   String? selectHeight;
-   String? selectWeight;
-   bool isMale = true;
+  bool isAppleHealth = true;
+  DateTime? selectDate;
+  String? selectHeight;
+  String? selectWeight;
+  bool isMale = true;
 
   @override
   Widget build(BuildContext context) {
@@ -63,19 +63,19 @@ class _Step3ViewState extends State<Step3View> {
                 ),
               ),
 
-      Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 25),
-        child: Text("Let us know about you to speed up the result, Get fit with your personal workout plan"
-            ,
-          textAlign: TextAlign.center,
-          style: TextStyle(
-              color: TColor.sceondarText,
-              fontSize: 16,
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 25),
+                child: Text("Let us know about you to speed up the result, Get fit with your personal workout plan"
+                  ,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: TColor.sceondarText,
+                    fontSize: 16,
+                  ),
+                ),
               ),
-        ),
-      ),
 
-               SizedBox(height: media.width * 0.05,),
+              SizedBox(height: media.width * 0.05,),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 25),
                 child: Column(
@@ -83,28 +83,28 @@ class _Step3ViewState extends State<Step3View> {
                     Row(
                       children: [
                         Expanded(
-                            child: Column( crossAxisAlignment: CrossAxisAlignment.start,
+                          child: Column( crossAxisAlignment: CrossAxisAlignment.start,
 
-                          children: [
-                            Text("Apple Health",
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                  color: TColor.sceondarText,
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.w700),
-                            ),
-                           const SizedBox(height: 0.05,),
-                            Text(
-                              "Allow access to fill my parameters",
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                color: TColor.sceondarText,
-                                fontSize: 16
+                            children: [
+                              Text("Apple Health",
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                    color: TColor.sceondarText,
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.w700),
                               ),
-                            )
-                          ],
-                        ),),
-                        
+                              const SizedBox(height: 0.05,),
+                              Text(
+                                "Allow access to fill my parameters",
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                    color: TColor.sceondarText,
+                                    fontSize: 16
+                                ),
+                              )
+                            ],
+                          ),),
+
                         CupertinoSwitch(
                             activeColor: TColor.primary,
                             value: isAppleHealth, onChanged: (newVal){
@@ -116,12 +116,12 @@ class _Step3ViewState extends State<Step3View> {
                     ),
                     SizedBox(height: media.width * 0.05,),
                     Divider(color: TColor.divider, height: 1,),
-                  SelectDatetime(selectDate: selectDate, title: 'Birthday',
-                                     didChange: (newDate){
-                                       setState(() {
-                                          selectDate = newDate;
-                                       });
-                                     },
+                    SelectDatetime(selectDate: selectDate, title: 'Birthday',
+                      didChange: (newDate){
+                        setState(() {
+                          selectDate = newDate;
+                        });
+                      },
                     ),
                     Divider(color: TColor.divider, height: 1,),
                     SelectPicker(allVal: const [
@@ -129,9 +129,9 @@ class _Step3ViewState extends State<Step3View> {
                       "161 cm",
                       "162 cm",
 
-                        "163 cm",
-                        "164 cm",
-                        "165 cm",
+                      "163 cm",
+                      "164 cm",
+                      "165 cm",
 
                       "166 cm",
                       "167 cm",
@@ -144,11 +144,11 @@ class _Step3ViewState extends State<Step3View> {
 
                     ], selectVal: selectHeight,
                         title: "Height", didChange: (newVal){
-                                setState(() {
-                                  selectHeight = newVal;
-                                });
+                          setState(() {
+                            selectHeight = newVal;
+                          });
                         }
-                        ),
+                    ),
                     Divider(color: TColor.divider, height: 1,),
                     SelectPicker(allVal: const [
                       "50 kg",
@@ -187,22 +187,22 @@ class _Step3ViewState extends State<Step3View> {
                           ),
 
                           CupertinoSegmentedControl(
-                              groupValue: isMale,
-                              selectedColor: TColor.primary,
-                              unselectedColor: TColor.white,
-                              borderColor: TColor.primary,
-                              children: const {
+                            groupValue: isMale,
+                            selectedColor: TColor.primary,
+                            unselectedColor: TColor.white,
+                            borderColor: TColor.primary,
+                            children: const {
 
-                            true: Text(" Male ",  style: TextStyle(
+                              true: Text(" Male ",  style: TextStyle(
 
                                 fontSize: 18,
 
-                            ),),
-                            false : Text(" Female ",style: TextStyle(
+                              ),),
+                              false : Text(" Female ",style: TextStyle(
 
-                              fontSize: 18)),
+                                  fontSize: 18)),
 
-            }, onValueChanged: (isMaleVal)
+                            }, onValueChanged: (isMaleVal)
                           {
                             setState(() {
                               isMale = isMaleVal;
@@ -224,10 +224,10 @@ class _Step3ViewState extends State<Step3View> {
                 child: RoundButton(
                   title: 'Start', onPressed: () {
 
-                    Navigator.pushAndRemoveUntil(
-                        context, MaterialPageRoute(builder:
-                    (context) => const MenuView()
-                    ), (route) => false);
+                  Navigator.pushAndRemoveUntil(
+                      context, MaterialPageRoute(builder:
+                      (context) => const MenuView()
+                  ), (route) => false);
 
                 },),
               ),

@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:workoutfitnesstool/common/color_extention.dart';
 
 import '../../common_widget/round_button.dart';
-import '../menu/menu_view.dart';
+import '../../common/smooth_page_route.dart';
+import 'activity_level_view.dart';
 
 class OnBoardingView extends StatefulWidget {
   const OnBoardingView({super.key});
@@ -53,13 +54,15 @@ class _OnBoardingViewState
     });
   }
 
-  void _openHome() {
-    Navigator.pushAndRemoveUntil(
+  Future<void> _openHome() async {
+    await precacheImage(
+      const AssetImage('assets/img/walk1.png'),
       context,
-      MaterialPageRoute(
-        builder: (_) => const MenuView(),
-      ),
-          (route) => false,
+    );
+
+    if (!mounted) return;
+    Navigator.of(context).push(
+      smoothPageRoute(const ActivityLevelView()),
     );
   }
 
